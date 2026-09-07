@@ -1,4 +1,5 @@
 import { el, escapeHtml, formatDate } from "./dom.js";
+import { navigateToView, pathForView } from "./router.js";
 import { selectedAgenda, state } from "./state.js";
 
 export function showLogin() {
@@ -48,7 +49,7 @@ function renderAgendaList() {
   document.querySelectorAll(".agenda-item").forEach((button) => {
     button.addEventListener("click", () => {
       state.selectedId = Number(button.dataset.id);
-      state.activeView = "detail";
+      navigateToView("detail");
       render();
     });
   });
@@ -58,7 +59,7 @@ function renderNavigation() {
   el("sidebarNav").innerHTML = navItems()
     .map(
       (item) => `
-        <button class="nav-item ${state.activeView === item.id ? "active" : ""}" data-view="${item.id}" type="button">
+        <button class="nav-item ${state.activeView === item.id ? "active" : ""}" data-view="${item.id}" data-path="${pathForView(item.id)}" type="button">
           <span class="nav-icon nav-icon-${item.icon}" aria-hidden="true"></span>
           <span>${item.label}</span>
           ${item.count === undefined ? "" : `<strong>${item.count}</strong>`}
@@ -69,7 +70,7 @@ function renderNavigation() {
 
   document.querySelectorAll(".nav-item").forEach((button) => {
     button.addEventListener("click", () => {
-      state.activeView = button.dataset.view;
+      navigateToView(button.dataset.view);
       render();
     });
   });
@@ -79,7 +80,7 @@ function renderActiveView() {
   const isStaff = state.user.role === "staf";
   const allowedViews = navItems().map((item) => item.id);
   if (!allowedViews.includes(state.activeView)) {
-    state.activeView = "dashboard";
+    navigateToView("dashboard");
   }
 
   toggleView("dashboardPanel", state.activeView === "dashboard");
@@ -124,7 +125,7 @@ function renderAgendaTable() {
   document.querySelectorAll(".agenda-row").forEach((button) => {
     button.addEventListener("click", () => {
       state.selectedId = Number(button.dataset.id);
-      state.activeView = "detail";
+      navigateToView("detail");
       render();
     });
   });

@@ -6,6 +6,8 @@ import (
 	"errors"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -61,8 +63,18 @@ func (app *App) routes() http.Handler {
 	mux.HandleFunc("/api/agendas/", app.agendaAction)
 	mux.HandleFunc("/api/notifications", app.notifications)
 	mux.HandleFunc("/api/files/", app.downloadFile)
-	mux.Handle("/", http.FileServer(http.Dir(app.frontendDir)))
+	mux.HandleFunc("/", app.frontend)
 	return mux
+}
+
+func (app *App) frontend(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == "/" || filepath.Ext(r.URL.Path) == "" {
+		http.ServeFile(w, r, filepath.Join(app.frontendDir, "index.html"))
+		return
+	}
+
+	cleanPath := strings.TrimPrefix(filepath.Clean(r.URL.Path), string(filepath.Separator))
+	http.ServeFile(w, r, filepath.Join(app.frontendDir, cleanPath))
 }
 
 func waitForDB(ctx context.Context, db *sql.DB) error {

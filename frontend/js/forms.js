@@ -1,5 +1,6 @@
 import { api } from "./api.js";
 import { el, toInputTime } from "./dom.js";
+import { navigateToView, syncViewFromPath } from "./router.js";
 import { clearSessionState, selectedAgenda, setDashboardData, state } from "./state.js";
 import { render, showApp, showLogin } from "./render.js";
 
@@ -12,11 +13,20 @@ export function bindEvents() {
   el("validationForm").addEventListener("submit", validateAgenda);
   el("pullbackBtn").addEventListener("click", pullBackAgenda);
   el("reportForm").addEventListener("submit", uploadDocumentation);
+  window.addEventListener("popstate", () => {
+    if (!state.user) {
+      showLogin();
+      return;
+    }
+    syncViewFromPath();
+    render();
+  });
 }
 
 export async function bootstrap() {
   try {
     state.user = await api("/api/me");
+    syncViewFromPath();
     await refresh({ alertNew: false });
     showApp();
     startNotificationPolling();
@@ -53,6 +63,7 @@ async function login(event) {
       headers: { "Content-Type": "application/json" },
     });
     await refresh({ alertNew: false });
+    navigateToView("dashboard");
     showApp();
     startNotificationPolling();
   } catch (error) {
@@ -80,6 +91,7 @@ function syncDemoEmailWithRole() {
 async function logout() {
   await api("/api/logout", { method: "POST" });
   clearSessionState();
+  window.history.pushState({ view: "login" }, "", "/");
   showLogin();
 }
 
