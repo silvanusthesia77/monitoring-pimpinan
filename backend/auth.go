@@ -24,12 +24,21 @@ func (app *App) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	req.Email = strings.TrimSpace(strings.ToLower(req.Email))
+	if req.Role != roleStaff && req.Role != roleLeader {
+		expireSessionCookie(w)
+		badRequest(w, "Role wajib dipilih")
+		return
+	}
+
 	user, passwordHash, err := app.findUserByEmail(req.Email)
 	if err != nil || bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(req.Password)) != nil {
+		expireSessionCookie(w)
 		writeError(w, http.StatusUnauthorized, "Email atau password salah")
 		return
 	}
-	if req.Role != "" && user.Role != req.Role {
+	if user.Role != req.Role {
+		expireSessionCookie(w)
 		writeError(w, http.StatusUnauthorized, "Role tidak sesuai dengan akun")
 		return
 	}
@@ -135,7 +144,7 @@ func (app *App) logout(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		app.sessions.Delete(cookie.Value)
 	}
-	http.SetCookie(w, &http.Cookie{Name: sessionCookie, Path: "/", MaxAge: -1})
+	expireSessionCookie(w)
 	writeJSON(w, http.StatusOK, map[string]string{"message": "Keluar dari sistem"})
 }
 
@@ -156,4 +165,8 @@ func (app *App) findUserByEmail(email string) (User, string, error) {
 		email,
 	).Scan(&user.ID, &user.Name, &user.Email, &passwordHash, &user.Role, &user.Position)
 	return user, passwordHash, err
+}
+
+func expireSessionCookie(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{Name: sessionCookie, Path: "/", MaxAge: -1})
 }
