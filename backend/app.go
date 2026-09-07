@@ -57,6 +57,7 @@ func newApp() (*App, error) {
 func (app *App) routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/login", app.login)
+	mux.HandleFunc("/api/register", app.register)
 	mux.HandleFunc("/api/logout", app.logout)
 	mux.HandleFunc("/api/me", app.me)
 	mux.HandleFunc("/api/agendas", app.agendas)

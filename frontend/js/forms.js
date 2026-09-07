@@ -6,9 +6,13 @@ import { render, showApp, showLogin } from "./render.js";
 
 export function bindEvents() {
   el("loginForm").addEventListener("submit", login);
+  el("registerForm").addEventListener("submit", register);
   el("role").addEventListener("change", fillDemoAccount);
+  el("showLoginForm").addEventListener("click", () => showAuthForm("login"));
+  el("showRegisterForm").addEventListener("click", () => showAuthForm("register"));
   el("logoutBtn").addEventListener("click", logout);
   el("togglePassword").addEventListener("click", togglePassword);
+  el("toggleRegisterPassword").addEventListener("click", () => togglePasswordField("registerPassword", "toggleRegisterPassword"));
   el("agendaForm").addEventListener("submit", createAgenda);
   el("validationForm").addEventListener("submit", validateAgenda);
   el("pullbackBtn").addEventListener("click", pullBackAgenda);
@@ -69,6 +73,33 @@ async function login(event) {
   } catch (error) {
     el("loginError").textContent = error.message;
     el("loginError").classList.remove("hidden");
+  }
+}
+
+async function register(event) {
+  event.preventDefault();
+  el("registerError").classList.add("hidden");
+
+  try {
+    state.user = await api("/api/register", {
+      method: "POST",
+      body: JSON.stringify({
+        role: el("registerRole").value,
+        name: el("registerName").value,
+        position: el("registerPosition").value,
+        email: el("registerEmail").value,
+        password: el("registerPassword").value,
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+    event.target.reset();
+    await refresh({ alertNew: false });
+    navigateToView("dashboard");
+    showApp();
+    startNotificationPolling();
+  } catch (error) {
+    el("registerError").textContent = error.message;
+    el("registerError").classList.remove("hidden");
   }
 }
 
@@ -175,14 +206,29 @@ async function uploadDocumentation(event) {
 }
 
 function togglePassword() {
-  const input = el("password");
-  const button = el("togglePassword");
+  togglePasswordField("password", "togglePassword");
+}
+
+function togglePasswordField(inputId, buttonId) {
+  const input = el(inputId);
+  const button = el(buttonId);
   const isHidden = input.type === "password";
 
   input.type = isHidden ? "text" : "password";
   button.setAttribute("aria-label", isHidden ? "Sembunyikan password" : "Lihat password");
   button.setAttribute("title", isHidden ? "Sembunyikan password" : "Lihat password");
   button.classList.toggle("is-visible", isHidden);
+}
+
+function showAuthForm(mode) {
+  const isRegister = mode === "register";
+  el("loginForm").classList.toggle("hidden", isRegister);
+  el("registerForm").classList.toggle("hidden", !isRegister);
+  el("showLoginForm").classList.toggle("active", !isRegister);
+  el("showRegisterForm").classList.toggle("active", isRegister);
+  el("authTitle").textContent = isRegister ? "Daftar pengguna" : "Login pengguna";
+  el("loginError").classList.add("hidden");
+  el("registerError").classList.add("hidden");
 }
 
 function startNotificationPolling() {

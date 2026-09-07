@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -48,6 +49,80 @@ func (app *App) login(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   86400,
 	})
 	writeJSON(w, http.StatusOK, user)
+}
+
+func (app *App) register(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		methodNotAllowed(w)
+		return
+	}
+
+	var req struct {
+		Name     string `json:"name"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
+		Role     string `json:"role"`
+		Position string `json:"position"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		badRequest(w, "Format daftar tidak valid")
+		return
+	}
+
+	req.Name = strings.TrimSpace(req.Name)
+	req.Email = strings.TrimSpace(strings.ToLower(req.Email))
+	req.Position = strings.TrimSpace(req.Position)
+	if req.Name == "" || req.Email == "" || req.Password == "" || req.Position == "" {
+		badRequest(w, "Nama, email, password, dan jabatan wajib diisi")
+		return
+	}
+	if req.Role != roleStaff && req.Role != roleLeader {
+		badRequest(w, "Role harus staf atau pimpinan")
+		return
+	}
+	if len(req.Password) < 6 {
+		badRequest(w, "Password minimal 6 karakter")
+		return
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Gagal membuat password")
+		return
+	}
+
+	result, err := app.db.Exec(
+		"INSERT INTO users (name, email, password_hash, role, position) VALUES (?, ?, ?, ?, ?)",
+		req.Name, req.Email, string(hash), req.Role, req.Position,
+	)
+	if err != nil {
+		writeError(w, http.StatusConflict, "Email sudah terdaftar atau data tidak valid")
+		return
+	}
+
+	id, _ := result.LastInsertId()
+	user := User{
+		ID:       id,
+		Name:     req.Name,
+		Email:    req.Email,
+		Role:     req.Role,
+		Position: req.Position,
+	}
+	token, err := app.sessions.Create(user)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Akun dibuat, tetapi sesi gagal dibuat")
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     sessionCookie,
+		Value:    token,
+		Path:     "/",
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   86400,
+	})
+	writeJSON(w, http.StatusCreated, user)
 }
 
 func (app *App) logout(w http.ResponseWriter, r *http.Request) {

@@ -27,8 +27,12 @@
           <span class="login-logo" aria-hidden="true">AM</span>
           <div>
             <p>Masuk Sistem</p>
-            <h2>Login pengguna</h2>
+            <h2 id="authTitle">Login pengguna</h2>
           </div>
+        </div>
+        <div class="auth-tabs">
+          <button id="showLoginForm" class="auth-tab active" type="button">Masuk</button>
+          <button id="showRegisterForm" class="auth-tab" type="button">Daftar</button>
         </div>
         <form id="loginForm" class="login-form">
           <label class="form-label">
@@ -60,6 +64,29 @@
             <p>Pimpinan: pimpinan@sorsel.go.id / agenda123</p>
           </div>
           <p id="loginError" class="hidden rounded-md bg-red-50 p-3 text-sm font-bold text-red-700"></p>
+        </form>
+        <form id="registerForm" class="login-form hidden">
+          <label class="form-label">
+            Role
+            <select id="registerRole" class="field">
+              <option value="staf">Staf</option>
+              <option value="pimpinan">Pimpinan</option>
+            </select>
+          </label>
+          <label class="form-label">Nama lengkap<input id="registerName" class="field" required /></label>
+          <label class="form-label">Jabatan<input id="registerPosition" class="field" required /></label>
+          <label class="form-label">Email<input id="registerEmail" class="field" type="email" autocomplete="username" required /></label>
+          <label class="form-label">
+            Password
+            <span class="password-wrap">
+              <input id="registerPassword" class="field pr-12" type="password" autocomplete="new-password" required />
+              <button id="toggleRegisterPassword" class="password-toggle" type="button" aria-label="Lihat password" title="Lihat password">
+                <span class="eye-icon" aria-hidden="true"></span>
+              </button>
+            </span>
+          </label>
+          <button class="login-submit" type="submit">Daftar & Masuk</button>
+          <p id="registerError" class="hidden rounded-md bg-red-50 p-3 text-sm font-bold text-red-700"></p>
         </form>
       </section>
 
@@ -217,6 +244,6 @@
         </div>
       </section>
     </main>
-    <script type="module" src="/app.js?v=20260907-routing"></script>
+    <script type="module" src="/app.js?v=20260907-register"></script>
   </body>
 </html>

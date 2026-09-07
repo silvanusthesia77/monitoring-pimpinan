@@ -7,6 +7,7 @@ HTML, CSS, serta Tailwind CSS.
 ## Fitur
 
 - Login dua aktor: staf dan pimpinan
+- Daftar akun baru dengan pilihan role staf atau pimpinan
 - Staf menginput jadwal kunjungan pimpinan
 - Staf upload undangan dan mengisi keterangan agenda
 - Pimpinan menerima alert dan email saat agenda disubmit
@@ -24,6 +25,8 @@ HTML, CSS, serta Tailwind CSS.
 | --- | --- | --- |
 | Staf | `staf@sorsel.go.id` | `agenda123` |
 | Pimpinan | `pimpinan@sorsel.go.id` | `agenda123` |
+
+User baru juga bisa dibuat dari tab `Daftar` di halaman login.
 
 ## Menjalankan Dengan Docker
 
