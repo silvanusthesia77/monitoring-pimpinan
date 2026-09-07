@@ -16,8 +16,9 @@ export function bindEvents() {
 export async function bootstrap() {
   try {
     state.user = await api("/api/me");
-    await refresh();
+    await refresh({ alertNew: false });
     showApp();
+    startNotificationPolling();
   } catch {
     showLogin();
   }
@@ -48,8 +49,9 @@ async function login(event) {
       }),
       headers: { "Content-Type": "application/json" },
     });
-    await refresh();
+    await refresh({ alertNew: false });
     showApp();
+    startNotificationPolling();
   } catch (error) {
     el("loginError").textContent = error.message;
     el("loginError").classList.remove("hidden");
@@ -62,21 +64,29 @@ async function logout() {
   showLogin();
 }
 
-async function refresh() {
+async function refresh({ alertNew = true } = {}) {
   const [agendas, notifications] = await Promise.all([
     api("/api/agendas"),
     api("/api/notifications"),
   ]);
+  const oldIds = new Set(state.seenNotificationIds);
   setDashboardData(agendas, notifications);
   render();
+  showNotificationAlerts(notifications, oldIds, alertNew);
+  state.seenNotificationIds = new Set(notifications.map((notice) => notice.id));
 }
 
 async function createAgenda(event) {
   event.preventDefault();
-  await api("/api/agendas", { method: "POST", body: new FormData(event.target) });
-  event.target.reset();
-  setDefaultDates();
-  await refresh();
+  try {
+    await api("/api/agendas", { method: "POST", body: new FormData(event.target) });
+    event.target.reset();
+    setDefaultDates();
+    await refresh({ alertNew: false });
+    showToast("Agenda terkirim", "Agenda baru sudah dikirim ke pimpinan.");
+  } catch (error) {
+    showToast("Gagal menyimpan agenda", error.message);
+  }
 }
 
 async function validateAgenda(event) {
@@ -85,16 +95,21 @@ async function validateAgenda(event) {
   if (!agenda) return;
 
   const form = new FormData(event.target);
-  await api(`/api/agendas/${agenda.id}/validation`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      status: form.get("status"),
-      delegate: form.get("delegate"),
-      leader_note: form.get("leader_note"),
-    }),
-  });
-  await refresh();
+  try {
+    await api(`/api/agendas/${agenda.id}/validation`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        status: form.get("status"),
+        delegate: form.get("delegate"),
+        leader_note: form.get("leader_note"),
+      }),
+    });
+    await refresh({ alertNew: false });
+    showToast("Agenda divalidasi", "Keputusan pimpinan sudah disimpan.");
+  } catch (error) {
+    showToast("Validasi ditolak", error.message);
+  }
 }
 
 async function pullBackAgenda() {
@@ -103,9 +118,10 @@ async function pullBackAgenda() {
 
   try {
     await api(`/api/agendas/${agenda.id}/pullback`, { method: "POST" });
-    await refresh();
+    await refresh({ alertNew: false });
+    showToast("Validasi ditarik", "Agenda kembali ke status menunggu validasi.");
   } catch (error) {
-    alert(error.message);
+    showToast("Tidak bisa ditarik", error.message);
   }
 }
 
@@ -114,12 +130,17 @@ async function uploadDocumentation(event) {
   const agenda = selectedAgenda();
   if (!agenda) return;
 
-  await api(`/api/agendas/${agenda.id}/documentation`, {
-    method: "POST",
-    body: new FormData(event.target),
-  });
-  event.target.reset();
-  await refresh();
+  try {
+    await api(`/api/agendas/${agenda.id}/documentation`, {
+      method: "POST",
+      body: new FormData(event.target),
+    });
+    event.target.reset();
+    await refresh({ alertNew: false });
+    showToast("Laporan tersimpan", "Dokumentasi kegiatan sudah dapat dilihat dan didownload.");
+  } catch (error) {
+    showToast("Upload ditolak", error.message);
+  }
 }
 
 function togglePassword() {
@@ -131,4 +152,36 @@ function togglePassword() {
   button.setAttribute("aria-label", isHidden ? "Sembunyikan password" : "Lihat password");
   button.setAttribute("title", isHidden ? "Sembunyikan password" : "Lihat password");
   button.classList.toggle("is-visible", isHidden);
+}
+
+function startNotificationPolling() {
+  if (state.pollTimer) return;
+  state.pollTimer = setInterval(() => {
+    refresh({ alertNew: true }).catch(() => {});
+  }, 15000);
+}
+
+function showNotificationAlerts(notifications, oldIds, alertNew) {
+  if (!alertNew || oldIds.size === 0) return;
+  notifications
+    .filter((notice) => !oldIds.has(notice.id))
+    .reverse()
+    .forEach((notice) => showToast(notice.title, notice.body));
+}
+
+function showToast(title, body) {
+  const container = el("toastContainer");
+  if (!container) return;
+
+  const item = document.createElement("article");
+  item.className = "toast-alert";
+
+  const heading = document.createElement("strong");
+  heading.textContent = title;
+  const text = document.createElement("p");
+  text.textContent = body;
+
+  item.append(heading, text);
+  container.append(item);
+  setTimeout(() => item.remove(), 5200);
 }

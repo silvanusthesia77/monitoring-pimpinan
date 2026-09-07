@@ -9,12 +9,13 @@ HTML, CSS, serta Tailwind CSS.
 - Login dua aktor: staf dan pimpinan
 - Staf menginput jadwal kunjungan pimpinan
 - Staf upload undangan dan mengisi keterangan agenda
-- Pimpinan menerima alert dan simulasi email saat agenda disubmit
+- Pimpinan menerima alert dan email saat agenda disubmit
 - Pimpinan memilih hadir sendiri atau diwakili
 - Pimpinan memilih pejabat yang mewakili dan mengisi keterangan validasi
 - Pimpinan dapat menarik kembali validasi selama kegiatan masih lebih dari 24 jam
 - Validasi terkunci jika kegiatan kurang dari 24 jam atau sudah berjalan
-- Staf upload dokumentasi kegiatan sebagai laporan
+- Status agenda otomatis: menunggu validasi, tervalidasi, terkunci, sedang berlangsung, menunggu dokumentasi, selesai
+- Staf upload dokumentasi kegiatan sebagai laporan setelah kegiatan selesai
 - Pimpinan dan staf dapat download undangan serta dokumentasi
 
 ## Akun Demo
@@ -79,6 +80,21 @@ MYSQL_DSN="root:root@tcp(127.0.0.1:3306)/agenda_monitor?parseTime=true&multiStat
 
 Backend otomatis membaca `database/schema.sql`, membuat tabel, dan membuat akun
 demo jika tabel pengguna masih kosong.
+
+## Email Notifikasi
+
+Jika SMTP belum diatur, sistem tetap mencatat email sebagai simulasi di log backend.
+Untuk mengirim email sungguhan, jalankan backend dengan environment berikut:
+
+```bash
+SMTP_HOST="smtp.gmail.com" \
+SMTP_PORT="587" \
+SMTP_USERNAME="email@example.com" \
+SMTP_PASSWORD="app-password" \
+SMTP_FROM="email@example.com" \
+MYSQL_DSN="root:root@tcp(127.0.0.1:3306)/agenda_monitor?parseTime=true&multiStatements=true" \
+go run .
+```
 
 ## Catatan Implementasi
 

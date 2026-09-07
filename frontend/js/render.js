@@ -33,10 +33,12 @@ function renderHeader() {
 }
 
 function renderStats() {
-  el("statWaiting").textContent = state.agendas.filter((agenda) => agenda.status === "menunggu").length;
-  el("statValidated").textContent = state.agendas.filter((agenda) => agenda.status !== "menunggu").length;
-  el("statLocked").textContent = state.agendas.filter((agenda) => !agenda.can_revise).length;
-  el("statReports").textContent = state.agendas.filter((agenda) => agenda.documentation).length;
+  el("statWaiting").textContent = state.agendas.filter((agenda) => agenda.phase === "menunggu_validasi").length;
+  el("statValidated").textContent = state.agendas.filter((agenda) =>
+    ["tervalidasi_hadir", "tervalidasi_diwakili"].includes(agenda.phase),
+  ).length;
+  el("statLocked").textContent = state.agendas.filter((agenda) => agenda.is_locked).length;
+  el("statReports").textContent = state.agendas.filter((agenda) => agenda.phase === "selesai").length;
 }
 
 function renderAgendaList() {
@@ -106,11 +108,11 @@ function renderDetail() {
   }
 
   title.textContent = agenda.title;
-  status.textContent = statusLabel(agenda.status);
-  status.className = `badge ${agenda.status}`;
+  status.textContent = statusLabel(agenda);
+  status.className = `badge ${agenda.phase || agenda.status}`;
   body.innerHTML = agendaDetails(agenda);
   downloads.innerHTML = agendaDownloads(agenda);
-  el("pullbackBtn").disabled = agenda.status === "menunggu" || !agenda.can_revise;
+  updateActionControls(agenda);
 }
 
 function renderAgendaTable() {
@@ -137,7 +139,7 @@ function renderNotifications() {
 function agendaItem(agenda) {
   return `
     <button class="agenda-item ${agenda.id === state.selectedId ? "active" : ""}" data-id="${agenda.id}" type="button">
-      <span class="status-dot ${agenda.status}"></span>
+      <span class="status-dot ${agenda.phase || agenda.status}"></span>
       <span>
         <strong class="block">${escapeHtml(agenda.title)}</strong>
         <small class="block text-xs font-bold text-slate-500">${formatDate(agenda.start_at)}</small>
@@ -154,8 +156,8 @@ function agendaRow(agenda) {
         <small>${escapeHtml(agenda.location)}</small>
       </span>
       <span>${formatDate(agenda.start_at)}</span>
-      <span class="badge ${agenda.status}">${statusLabel(agenda.status)}</span>
-      <span>${agenda.can_revise ? "Bisa diubah" : "Terkunci"}</span>
+      <span class="badge ${agenda.phase || agenda.status}">${statusLabel(agenda)}</span>
+      <span>${agenda.can_pullback ? "Bisa diubah" : agenda.display_status || "Terkunci"}</span>
     </button>
   `;
 }
@@ -165,6 +167,7 @@ function agendaDetails(agenda) {
     detailRow("Lokasi", agenda.location),
     detailRow("Waktu", `${formatDate(agenda.start_at)} sampai ${formatDate(agenda.end_at)}`),
     detailRow("Penyelenggara", agenda.organizer),
+    detailRow("Status agenda", agenda.display_status || statusLabel(agenda)),
     detailRow("Sisa waktu", `${Math.max(0, agenda.hours_until)} jam`),
     detailRow("Keterangan staf", agenda.staff_note),
     detailRow("Keterangan pimpinan", agenda.leader_note || "Belum ada keterangan."),
@@ -208,9 +211,32 @@ function muted(text) {
 }
 
 function statusLabel(status) {
-  if (status === "hadir") return "Hadir";
-  if (status === "diwakili") return "Diwakili";
-  return "Menunggu";
+  const agenda = typeof status === "object" ? status : { status };
+  if (agenda.display_status) return agenda.display_status;
+  if (agenda.status === "hadir") return "Tervalidasi - Hadir";
+  if (agenda.status === "diwakili") return "Tervalidasi - Diwakili";
+  return "Menunggu Validasi";
+}
+
+function updateActionControls(agenda) {
+  const validationSubmit = el("validationSubmit");
+  const pullbackBtn = el("pullbackBtn");
+  const reportSubmit = el("reportSubmit");
+  const reportHint = el("reportHint");
+
+  validationSubmit.disabled = !agenda.can_validate;
+  pullbackBtn.disabled = !agenda.can_pullback;
+  reportSubmit.disabled = !agenda.can_upload_documentation;
+
+  if (agenda.can_upload_documentation) {
+    reportHint.textContent = "Kegiatan sudah selesai. Dokumentasi dan catatan laporan bisa diupload.";
+  } else if (agenda.status === "menunggu") {
+    reportHint.textContent = "Agenda harus divalidasi pimpinan sebelum laporan kegiatan diupload.";
+  } else if (agenda.documentation) {
+    reportHint.textContent = "Dokumentasi sudah tersimpan dan dapat didownload pada detail agenda.";
+  } else {
+    reportHint.textContent = "Upload dokumentasi dibuka setelah waktu selesai kegiatan.";
+  }
 }
 
 function navItems() {

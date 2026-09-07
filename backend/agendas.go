@@ -136,7 +136,7 @@ func (app *App) createAgenda(w http.ResponseWriter, r *http.Request, user User) 
 	}
 
 	agendaID, _ := result.LastInsertId()
-	app.addNotification(roleLeader, "Agenda baru menunggu validasi", title+" telah disubmit staf. Email pemberitahuan disimulasikan terkirim ke pimpinan.", true)
+	app.notifyRole(roleLeader, "Agenda baru menunggu validasi", title+" telah disubmit staf dan membutuhkan validasi pimpinan.", true)
 
 	agenda, err := app.getAgenda(agendaID)
 	if err != nil {
@@ -161,6 +161,17 @@ func (app *App) validateAgenda(w http.ResponseWriter, r *http.Request, id int64,
 		badRequest(w, "Data validasi tidak valid")
 		return
 	}
+
+	agendaBefore, err := app.getAgenda(id)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	if !agendaBefore.CanValidate {
+		writeError(w, http.StatusConflict, "Agenda sudah terkunci atau kegiatan sudah berjalan, validasi tidak bisa diubah")
+		return
+	}
+
 	if !validDecision(req.Status, req.Delegate) {
 		badRequest(w, "Status harus hadir atau diwakili, dan perwakilan wajib diisi jika diwakili")
 		return
@@ -169,7 +180,7 @@ func (app *App) validateAgenda(w http.ResponseWriter, r *http.Request, id int64,
 		req.Delegate = ""
 	}
 
-	_, err := app.db.Exec(`
+	_, err = app.db.Exec(`
 		UPDATE agendas
 		SET status = ?, delegate = ?, leader_note = ?, validated_by = ?, validated_at = NOW(), pulled_back_at = NULL
 		WHERE id = ?`,
@@ -185,7 +196,7 @@ func (app *App) validateAgenda(w http.ResponseWriter, r *http.Request, id int64,
 		http.NotFound(w, r)
 		return
 	}
-	app.addNotification(roleStaff, "Agenda telah divalidasi pimpinan", validationMessage(agenda), false)
+	app.notifyRole(roleStaff, "Agenda telah divalidasi pimpinan", validationMessage(agenda), false)
 	writeJSON(w, http.StatusOK, agenda)
 }
 
@@ -221,7 +232,7 @@ func (app *App) pullBackAgenda(w http.ResponseWriter, r *http.Request, id int64)
 		return
 	}
 
-	app.addNotification(roleStaff, "Validasi agenda ditarik kembali", agenda.Title+" dikembalikan ke status menunggu untuk perubahan keputusan pimpinan.", false)
+	app.notifyRole(roleStaff, "Validasi agenda ditarik kembali", agenda.Title+" dikembalikan ke status menunggu untuk perubahan keputusan pimpinan.", false)
 	updated, _ := app.getAgenda(id)
 	writeJSON(w, http.StatusOK, updated)
 }
@@ -233,6 +244,16 @@ func (app *App) uploadDocumentation(w http.ResponseWriter, r *http.Request, id i
 	}
 	if err := r.ParseMultipartForm(32 << 20); err != nil {
 		badRequest(w, "Form dokumentasi tidak valid")
+		return
+	}
+
+	agendaBefore, err := app.getAgenda(id)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	if !agendaBefore.CanUploadDoc {
+		writeError(w, http.StatusConflict, "Dokumentasi hanya bisa diupload setelah kegiatan selesai dan sebelum laporan tersimpan")
 		return
 	}
 
@@ -262,7 +283,7 @@ func (app *App) uploadDocumentation(w http.ResponseWriter, r *http.Request, id i
 		http.NotFound(w, r)
 		return
 	}
-	app.addNotification(roleLeader, "Dokumentasi kegiatan tersedia", "Laporan dokumentasi untuk "+agenda.Title+" telah diunggah staf.", false)
+	app.notifyRole(roleLeader, "Dokumentasi kegiatan tersedia", "Laporan dokumentasi untuk "+agenda.Title+" telah diunggah staf.", false)
 	writeJSON(w, http.StatusOK, agenda)
 }
 
@@ -301,6 +322,12 @@ func scanAgenda(scanner agendaScanner) (Agenda, error) {
 	agenda.PulledBackAt = nullableTime(pulledBackAt)
 	agenda.Invitation = nullableFile(invitationID, invitationName, invitationMime, invitationSize, invitationCreated)
 	agenda.Documentation = nullableFile(docID, docName, docMime, docSize, docCreated)
+	agenda.Phase, agenda.DisplayStatus = agendaLifecycle(agenda.Status, startAt, endAt, agenda.Documentation != nil)
+	agenda.IsLocked = agenda.Phase == phaseLocked
+	agenda.CanValidate = canRevise(startAt) && time.Now().Before(startAt) && agenda.Documentation == nil
+	agenda.CanRevise = agenda.CanValidate
+	agenda.CanPullback = agenda.Status != statusWait && agenda.CanValidate
+	agenda.CanUploadDoc = agenda.Status != statusWait && canUploadDocumentation(endAt) && agenda.Documentation == nil
 	return agenda, nil
 }
 

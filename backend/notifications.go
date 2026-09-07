@@ -47,7 +47,16 @@ func (app *App) addNotification(audience, title, body string, emailSent bool) {
 	if err != nil {
 		log.Printf("gagal menyimpan notifikasi: %v", err)
 	}
-	if emailSent {
-		log.Printf("[EMAIL SIMULASI] %s - %s", title, body)
+}
+
+func (app *App) notifyRole(audience, title, body string, sendEmail bool) {
+	emailSent := false
+	if sendEmail {
+		var err error
+		emailSent, err = app.mailer.Send(app.emailsForRole(audience), title, body)
+		if err != nil {
+			log.Printf("gagal mengirim email notifikasi: %v", err)
+		}
 	}
+	app.addNotification(audience, title, body, emailSent)
 }

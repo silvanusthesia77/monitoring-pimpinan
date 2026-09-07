@@ -643,6 +643,12 @@ body:not(.app-mode) .page-wrap p {
   background: #326abc;
 }
 
+.button-primary:disabled,
+.button-secondary:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .button-secondary {
   border: 1px solid #dee2e6;
   background: #fff;
@@ -721,6 +727,30 @@ body:not(.app-mode) .page-wrap p {
   background: #2d5f8b;
 }
 
+.status-dot.tervalidasi_hadir {
+  background: #1cbb8c;
+}
+
+.status-dot.tervalidasi_diwakili {
+  background: #2d5f8b;
+}
+
+.status-dot.terkunci {
+  background: #dc3545;
+}
+
+.status-dot.berlangsung {
+  background: #3b7ddd;
+}
+
+.status-dot.menunggu_dokumentasi {
+  background: #f59f00;
+}
+
+.status-dot.selesai {
+  background: #1cbb8c;
+}
+
 .badge,
 .download-link {
   display: inline-flex;
@@ -744,22 +774,34 @@ body:not(.app-mode) .page-wrap p {
 }
 
 .badge.hadir,
+.badge.tervalidasi_hadir,
+.badge.selesai,
 .download-link {
   background: #d2f1e8;
   border-color: #a4e4d1;
   color: #0b4b38;
 }
 
-.badge.diwakili {
+.badge.diwakili,
+.badge.tervalidasi_diwakili,
+.badge.berlangsung {
   background: #d8e5f8;
   border-color: #b1cbf1;
   color: #183258;
 }
 
-.badge.menunggu {
+.badge.menunggu,
+.badge.menunggu_validasi,
+.badge.menunggu_dokumentasi {
   background: #fef1d5;
   border-color: #fee3ab;
   color: #654a12;
+}
+
+.badge.terkunci {
+  background: #f8d7da;
+  border-color: #f1aeb5;
+  color: #58151c;
 }
 
 dt {
@@ -784,6 +826,45 @@ dd {
   border-radius: 4px;
   background: #f8f9fa;
   padding: 10px;
+}
+
+.toast-container {
+  position: fixed;
+  right: 18px;
+  top: 18px;
+  z-index: 30;
+  display: grid;
+  gap: 10px;
+  width: min(360px, calc(100vw - 36px));
+}
+
+.toast-alert {
+  border: 1px solid #b1cbf1;
+  border-left: 4px solid #3b7ddd;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 0.35rem 1rem rgba(33, 37, 41, 0.16);
+  padding: 12px;
+}
+
+.toast-alert strong {
+  display: block;
+  color: #212529;
+  font-size: 0.9rem;
+}
+
+.toast-alert p {
+  margin-top: 4px;
+  color: #495057;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.action-hint {
+  margin: 8px 0 0;
+  color: #667085;
+  font-size: 0.86rem;
+  font-weight: 700;
 }
 
 .agenda-table {

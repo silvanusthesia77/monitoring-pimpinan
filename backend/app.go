@@ -48,6 +48,7 @@ func newApp() (*App, error) {
 		uploadDir:   uploadDir,
 		frontendDir: env("FRONTEND_DIR", defaultFrontendDir),
 		sessions:    NewSessionStore(),
+		mailer:      newMailerFromEnv(),
 	}, nil
 }
 

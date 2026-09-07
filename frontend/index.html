@@ -55,6 +55,7 @@
       </section>
 
       <section id="appView" class="app-shell hidden">
+        <div id="toastContainer" class="toast-container" aria-live="polite"></div>
         <div class="dashboard-grid">
           <aside class="sidebar">
             <div class="sidebar-brand">
@@ -158,7 +159,7 @@
                 </label>
                 <label class="form-label">Keterangan pimpinan<textarea name="leader_note" class="field min-h-28"></textarea></label>
                 <div class="flex flex-wrap gap-3">
-                  <button class="button-primary" type="submit">Validasi</button>
+                  <button id="validationSubmit" class="button-primary" type="submit">Validasi</button>
                   <button id="pullbackBtn" class="button-secondary" type="button">Tarik Kembali</button>
                 </div>
               </form>
@@ -190,10 +191,11 @@
             <section id="reportPanel" class="view-panel panel hidden">
               <p class="section-kicker">Laporan Kegiatan</p>
               <h2 class="mt-1 text-xl font-black">Upload Dokumentasi</h2>
+              <p id="reportHint" class="action-hint"></p>
               <form id="reportForm" class="mt-4 grid gap-3">
                 <label class="form-label">File dokumentasi<input name="documentation" class="field file-field" type="file" required /></label>
                 <label class="form-label">Ringkasan laporan<textarea name="report_note" class="field min-h-24"></textarea></label>
-                <button class="button-primary" type="submit">Simpan Laporan</button>
+                <button id="reportSubmit" class="button-primary" type="submit">Simpan Laporan</button>
               </form>
             </section>
 

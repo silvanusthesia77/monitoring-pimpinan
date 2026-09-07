@@ -2,8 +2,10 @@ export const state = {
   user: null,
   agendas: [],
   notifications: [],
+  seenNotificationIds: new Set(),
   selectedId: null,
   activeView: "dashboard",
+  pollTimer: null,
 };
 
 export function selectedAgenda() {
@@ -14,8 +16,13 @@ export function clearSessionState() {
   state.user = null;
   state.agendas = [];
   state.notifications = [];
+  state.seenNotificationIds = new Set();
   state.selectedId = null;
   state.activeView = "dashboard";
+  if (state.pollTimer) {
+    clearInterval(state.pollTimer);
+    state.pollTimer = null;
+  }
 }
 
 export function setDashboardData(agendas, notifications) {

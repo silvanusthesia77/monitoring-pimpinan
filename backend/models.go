@@ -6,14 +6,21 @@ import (
 )
 
 const (
-	roleStaff      = "staf"
-	roleLeader     = "pimpinan"
-	roleAll        = "semua"
-	statusWait     = "menunggu"
-	statusAttend   = "hadir"
-	statusDelegate = "diwakili"
-	sessionCookie  = "agenda_session"
-	defaultPort    = "8080"
+	roleStaff                 = "staf"
+	roleLeader                = "pimpinan"
+	roleAll                   = "semua"
+	statusWait                = "menunggu"
+	statusAttend              = "hadir"
+	statusDelegate            = "diwakili"
+	phaseWaitingValidation    = "menunggu_validasi"
+	phaseValidatedAttend      = "tervalidasi_hadir"
+	phaseValidatedDelegate    = "tervalidasi_diwakili"
+	phaseLocked               = "terkunci"
+	phaseOngoing              = "berlangsung"
+	phaseWaitingDocumentation = "menunggu_dokumentasi"
+	phaseDone                 = "selesai"
+	sessionCookie             = "agenda_session"
+	defaultPort               = "8080"
 )
 
 type App struct {
@@ -21,6 +28,7 @@ type App struct {
 	uploadDir   string
 	frontendDir string
 	sessions    *SessionStore
+	mailer      Mailer
 }
 
 type User struct {
@@ -54,7 +62,13 @@ type Agenda struct {
 	PulledBackAt  *string     `json:"pulled_back_at"`
 	ReportNote    string      `json:"report_note"`
 	CreatedAt     string      `json:"created_at"`
+	Phase         string      `json:"phase"`
+	DisplayStatus string      `json:"display_status"`
 	CanRevise     bool        `json:"can_revise"`
+	CanValidate   bool        `json:"can_validate"`
+	CanPullback   bool        `json:"can_pullback"`
+	CanUploadDoc  bool        `json:"can_upload_documentation"`
+	IsLocked      bool        `json:"is_locked"`
 	HoursUntil    int64       `json:"hours_until"`
 	Invitation    *FileRecord `json:"invitation"`
 	Documentation *FileRecord `json:"documentation"`
@@ -75,4 +89,31 @@ type agendaScanner interface {
 
 func canRevise(startAt time.Time) bool {
 	return time.Until(startAt) >= 24*time.Hour
+}
+
+func canUploadDocumentation(endAt time.Time) bool {
+	return !time.Now().Before(endAt)
+}
+
+func agendaLifecycle(decision string, startAt, endAt time.Time, hasDocumentation bool) (string, string) {
+	now := time.Now()
+	if hasDocumentation {
+		return phaseDone, "Selesai"
+	}
+	if !now.Before(endAt) {
+		return phaseWaitingDocumentation, "Menunggu Dokumentasi"
+	}
+	if !now.Before(startAt) && now.Before(endAt) {
+		return phaseOngoing, "Sedang Berlangsung"
+	}
+	if time.Until(startAt) < 24*time.Hour {
+		return phaseLocked, "Agenda Terkunci"
+	}
+	if decision == statusAttend {
+		return phaseValidatedAttend, "Tervalidasi - Hadir"
+	}
+	if decision == statusDelegate {
+		return phaseValidatedDelegate, "Tervalidasi - Diwakili"
+	}
+	return phaseWaitingValidation, "Menunggu Validasi"
 }
