@@ -40,6 +40,7 @@ export function setDefaultDates() {
 async function login(event) {
   event.preventDefault();
   el("loginError").classList.add("hidden");
+  syncDemoEmailWithRole();
 
   try {
     state.user = await api("/api/login", {
@@ -64,6 +65,16 @@ function fillDemoAccount() {
   const role = el("role").value;
   el("email").value = role === "pimpinan" ? "pimpinan@sorsel.go.id" : "staf@sorsel.go.id";
   el("password").value = "agenda123";
+}
+
+function syncDemoEmailWithRole() {
+  const role = el("role").value;
+  const email = el("email").value.trim();
+  const isDemoEmail = email === "staf@sorsel.go.id" || email === "pimpinan@sorsel.go.id";
+
+  if (isDemoEmail) {
+    fillDemoAccount();
+  }
 }
 
 async function logout() {
