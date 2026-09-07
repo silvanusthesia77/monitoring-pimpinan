@@ -69,6 +69,7 @@ func (app *App) routes() http.Handler {
 }
 
 func (app *App) frontend(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
 	if r.URL.Path == "/" || filepath.Ext(r.URL.Path) == "" {
 		http.ServeFile(w, r, filepath.Join(app.frontendDir, "index.html"))
 		return

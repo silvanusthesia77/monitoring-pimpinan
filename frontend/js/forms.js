@@ -28,6 +28,13 @@ export function bindEvents() {
 }
 
 export async function bootstrap() {
+  if (window.location.pathname === "/login") {
+    await api("/api/logout", { method: "POST" }).catch(() => {});
+    clearSessionState();
+    showLogin();
+    return;
+  }
+
   try {
     state.user = await api("/api/me");
     syncViewFromPath();
@@ -122,7 +129,7 @@ function syncDemoEmailWithRole() {
 async function logout() {
   await api("/api/logout", { method: "POST" });
   clearSessionState();
-  window.history.pushState({ view: "login" }, "", "/");
+  window.history.pushState({ view: "login" }, "", "/login");
   showLogin();
 }
 
