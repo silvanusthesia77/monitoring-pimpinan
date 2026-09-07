@@ -2,12 +2,14 @@ import { el, escapeHtml, formatDate } from "./dom.js";
 import { selectedAgenda, state } from "./state.js";
 
 export function showLogin() {
+  document.body.classList.remove("app-mode");
   el("loginView").classList.remove("hidden");
   el("appView").classList.add("hidden");
   el("logoutBtn").classList.add("hidden");
 }
 
 export function showApp() {
+  document.body.classList.add("app-mode");
   el("loginView").classList.add("hidden");
   el("appView").classList.remove("hidden");
   el("logoutBtn").classList.remove("hidden");
@@ -27,6 +29,7 @@ export function render() {
 function renderHeader() {
   el("activeRole").textContent = state.user.role === "staf" ? "Staf" : "Pimpinan";
   el("activeUser").textContent = `${state.user.name}\n${state.user.position}`;
+  el("navbarRole").textContent = `${state.user.name} - ${state.user.role === "staf" ? "Staf" : "Pimpinan"}`;
 }
 
 function renderStats() {
@@ -193,7 +196,7 @@ function notificationItem(notice) {
 }
 
 function detailRow(label, value) {
-  return `<div class="border-t border-stone-200 pt-3"><dt>${label}</dt><dd>${escapeHtml(value)}</dd></div>`;
+  return `<div class="detail-row"><dt>${label}</dt><dd>${escapeHtml(value)}</dd></div>`;
 }
 
 function downloadLink(label, file) {

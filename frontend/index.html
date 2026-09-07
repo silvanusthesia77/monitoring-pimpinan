@@ -4,10 +4,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Aplikasi Monitor Agenda Pimpinan Kabupaten Sorong Selatan</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/styles.css" />
   </head>
-  <body class="bg-stone-50 text-slate-900 antialiased">
+  <body class="antialiased">
     <main>
       <section class="hero">
         <div class="page-wrap flex min-h-[190px] flex-col justify-end gap-4 py-6 md:flex-row md:items-end md:justify-between">
@@ -55,10 +57,15 @@
       <section id="appView" class="app-shell hidden">
         <div class="dashboard-grid">
           <aside class="sidebar">
+            <div class="sidebar-brand">
+              <span class="brand-mark">AM</span>
+              <span>Agenda Monitor</span>
+            </div>
+
             <div class="sidebar-card">
               <div class="flex items-start justify-between gap-3">
                 <div>
-                  <p class="text-xs font-black uppercase text-emerald-800">Aktor</p>
+                  <p class="section-kicker">Aktor</p>
                   <h2 id="activeRole" class="mt-1 text-lg font-black"></h2>
                 </div>
                 <span id="activeUser" class="text-right text-xs font-bold text-slate-500"></span>
@@ -69,7 +76,7 @@
 
             <div class="sidebar-card">
               <div class="mb-3">
-                <p class="text-xs font-black uppercase text-emerald-800">Agenda</p>
+                <p class="section-kicker">Agenda</p>
                 <h2 class="mt-1 text-lg font-black">Daftar Terdekat</h2>
               </div>
               <div id="agendaList" class="grid gap-2"></div>
@@ -84,8 +91,18 @@
           </aside>
 
           <div class="content-area">
+            <header class="app-navbar">
+              <div>
+                <p>Dashboard</p>
+                <h2>Aplikasi Monitor Agenda Pimpinan</h2>
+              </div>
+              <div class="navbar-user">
+                <span id="navbarRole">-</span>
+              </div>
+            </header>
+
             <section id="dashboardPanel" class="view-panel panel">
-              <p class="text-xs font-black uppercase text-emerald-800">Ringkasan</p>
+              <p class="section-kicker">Ringkasan</p>
               <h2 class="mt-1 text-xl font-black">Dashboard Agenda</h2>
               <div class="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
                 <div class="metric"><strong id="statWaiting">0</strong><span>Menunggu</span></div>
@@ -108,7 +125,7 @@
             </section>
 
             <section id="staffPanel" class="view-panel panel hidden">
-              <p class="text-xs font-black uppercase text-emerald-800">Input Staf</p>
+              <p class="section-kicker">Input Staf</p>
               <h2 class="mt-1 text-xl font-black">Tambah Jadwal Kunjungan</h2>
               <form id="agendaForm" class="mt-4 grid gap-3 md:grid-cols-2">
                 <label class="form-label">Nama kegiatan<input name="title" class="field" required /></label>
@@ -116,17 +133,17 @@
                 <label class="form-label">Mulai<input name="start_at" class="field" type="datetime-local" required /></label>
                 <label class="form-label">Selesai<input name="end_at" class="field" type="datetime-local" required /></label>
                 <label class="form-label">Penyelenggara<input name="organizer" class="field" required /></label>
-                <label class="form-label">Upload undangan<input name="invitation" class="field file:mr-3 file:rounded file:border-0 file:bg-emerald-100 file:px-3 file:py-2 file:font-bold file:text-emerald-900" type="file" /></label>
+                <label class="form-label">Upload undangan<input name="invitation" class="field file-field" type="file" /></label>
                 <label class="form-label md:col-span-2">Keterangan<textarea name="staff_note" class="field min-h-28" required></textarea></label>
-                <button class="rounded-md bg-emerald-800 px-4 py-3 font-black text-white md:col-span-2" type="submit">Submit ke Pimpinan</button>
+                <button class="button-primary md:col-span-2" type="submit">Submit ke Pimpinan</button>
               </form>
             </section>
 
             <section id="leaderPanel" class="view-panel panel hidden">
-              <p class="text-xs font-black uppercase text-emerald-800">Validasi Pimpinan</p>
+              <p class="section-kicker">Validasi Pimpinan</p>
               <h2 class="mt-1 text-xl font-black">Keputusan Kehadiran</h2>
               <form id="validationForm" class="mt-4 grid gap-3">
-                <div class="grid grid-cols-2 gap-2 rounded-md bg-stone-100 p-1">
+                <div class="choice-group">
                   <label class="choice"><input type="radio" name="status" value="hadir" checked /> Hadir sendiri</label>
                   <label class="choice"><input type="radio" name="status" value="diwakili" /> Diwakili</label>
                 </div>
@@ -141,8 +158,8 @@
                 </label>
                 <label class="form-label">Keterangan pimpinan<textarea name="leader_note" class="field min-h-28"></textarea></label>
                 <div class="flex flex-wrap gap-3">
-                  <button class="rounded-md bg-emerald-800 px-4 py-3 font-black text-white" type="submit">Validasi</button>
-                  <button id="pullbackBtn" class="rounded-md border border-stone-300 bg-white px-4 py-3 font-black text-emerald-900" type="button">Tarik Kembali</button>
+                  <button class="button-primary" type="submit">Validasi</button>
+                  <button id="pullbackBtn" class="button-secondary" type="button">Tarik Kembali</button>
                 </div>
               </form>
             </section>
@@ -150,7 +167,7 @@
             <section id="agendaPanel" class="view-panel panel hidden">
               <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p class="text-xs font-black uppercase text-emerald-800">Agenda</p>
+                  <p class="section-kicker">Agenda</p>
                   <h2 class="mt-1 text-xl font-black">Daftar Agenda Pimpinan</h2>
                 </div>
                 <span id="agendaCount" class="badge">0 agenda</span>
@@ -161,7 +178,7 @@
             <section id="detailPanel" class="view-panel panel hidden">
               <div class="mb-3 flex items-start justify-between gap-3">
                 <div>
-                  <p class="text-xs font-black uppercase text-emerald-800">Detail Agenda</p>
+                  <p class="section-kicker">Detail Agenda</p>
                   <h2 id="detailTitle" class="text-xl font-black">Belum ada agenda</h2>
                 </div>
                 <span id="detailStatus" class="badge">-</span>
@@ -171,17 +188,17 @@
             </section>
 
             <section id="reportPanel" class="view-panel panel hidden">
-              <p class="text-xs font-black uppercase text-emerald-800">Laporan Kegiatan</p>
+              <p class="section-kicker">Laporan Kegiatan</p>
               <h2 class="mt-1 text-xl font-black">Upload Dokumentasi</h2>
               <form id="reportForm" class="mt-4 grid gap-3">
-                <label class="form-label">File dokumentasi<input name="documentation" class="field file:mr-3 file:rounded file:border-0 file:bg-emerald-100 file:px-3 file:py-2 file:font-bold file:text-emerald-900" type="file" required /></label>
+                <label class="form-label">File dokumentasi<input name="documentation" class="field file-field" type="file" required /></label>
                 <label class="form-label">Ringkasan laporan<textarea name="report_note" class="field min-h-24"></textarea></label>
-                <button class="rounded-md bg-emerald-800 px-4 py-3 font-black text-white" type="submit">Simpan Laporan</button>
+                <button class="button-primary" type="submit">Simpan Laporan</button>
               </form>
             </section>
 
             <section id="notificationPanel" class="view-panel panel hidden">
-              <p class="text-xs font-black uppercase text-emerald-800">Notifikasi</p>
+              <p class="section-kicker">Notifikasi</p>
               <h2 class="mt-1 text-xl font-black">Alert Sistem</h2>
               <div id="notificationList" class="mt-4 grid gap-2"></div>
             </section>
