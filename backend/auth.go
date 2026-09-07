@@ -16,6 +16,7 @@ func (app *App) login(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
+		Role     string `json:"role"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		badRequest(w, "Format login tidak valid")
@@ -25,6 +26,10 @@ func (app *App) login(w http.ResponseWriter, r *http.Request) {
 	user, passwordHash, err := app.findUserByEmail(req.Email)
 	if err != nil || bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(req.Password)) != nil {
 		writeError(w, http.StatusUnauthorized, "Email atau password salah")
+		return
+	}
+	if req.Role != "" && user.Role != req.Role {
+		writeError(w, http.StatusUnauthorized, "Role tidak sesuai dengan akun")
 		return
 	}
 

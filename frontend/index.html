@@ -27,21 +27,25 @@
           <span class="login-logo" aria-hidden="true">AM</span>
           <div>
             <p>Masuk Sistem</p>
-            <h2>Pilih akun demo</h2>
+            <h2>Login pengguna</h2>
           </div>
         </div>
         <form id="loginForm" class="login-form">
           <label class="form-label">
-            Email
-            <select id="email" class="field">
-              <option value="staf@sorsel.go.id">staf@sorsel.go.id - Staf</option>
-              <option value="pimpinan@sorsel.go.id">pimpinan@sorsel.go.id - Pimpinan</option>
+            Role
+            <select id="role" class="field">
+              <option value="staf">Staf</option>
+              <option value="pimpinan">Pimpinan</option>
             </select>
+          </label>
+          <label class="form-label">
+            Email
+            <input id="email" class="field" type="email" value="staf@sorsel.go.id" autocomplete="username" required />
           </label>
           <label class="form-label">
             Password
             <span class="password-wrap">
-              <input id="password" class="field pr-12" type="password" value="agenda123" />
+              <input id="password" class="field pr-12" type="password" value="agenda123" autocomplete="current-password" required />
               <button id="togglePassword" class="password-toggle" type="button" aria-label="Lihat password" title="Lihat password">
                 <span class="eye-icon" aria-hidden="true"></span>
               </button>
@@ -50,6 +54,11 @@
           <button class="login-submit" type="submit">
             Masuk
           </button>
+          <div class="demo-accounts">
+            <strong>Akun demo</strong>
+            <p>Staf: staf@sorsel.go.id / agenda123</p>
+            <p>Pimpinan: pimpinan@sorsel.go.id / agenda123</p>
+          </div>
           <p id="loginError" class="hidden rounded-md bg-red-50 p-3 text-sm font-bold text-red-700"></p>
         </form>
       </section>

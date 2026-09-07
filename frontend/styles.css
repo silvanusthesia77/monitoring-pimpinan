@@ -136,6 +136,27 @@ body:not(.app-mode) .page-wrap p {
   background: #326abc;
 }
 
+.demo-accounts {
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  background: #f8f9fa;
+  color: #495057;
+  padding: 10px 12px;
+}
+
+.demo-accounts strong {
+  display: block;
+  color: #212529;
+  font-size: 0.82rem;
+  margin-bottom: 5px;
+}
+
+.demo-accounts p {
+  margin: 2px 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
 .app-shell {
   width: 100%;
   margin-left: 0;

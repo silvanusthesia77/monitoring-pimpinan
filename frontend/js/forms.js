@@ -5,6 +5,7 @@ import { render, showApp, showLogin } from "./render.js";
 
 export function bindEvents() {
   el("loginForm").addEventListener("submit", login);
+  el("role").addEventListener("change", fillDemoAccount);
   el("logoutBtn").addEventListener("click", logout);
   el("togglePassword").addEventListener("click", togglePassword);
   el("agendaForm").addEventListener("submit", createAgenda);
@@ -44,6 +45,7 @@ async function login(event) {
     state.user = await api("/api/login", {
       method: "POST",
       body: JSON.stringify({
+        role: el("role").value,
         email: el("email").value,
         password: el("password").value,
       }),
@@ -56,6 +58,12 @@ async function login(event) {
     el("loginError").textContent = error.message;
     el("loginError").classList.remove("hidden");
   }
+}
+
+function fillDemoAccount() {
+  const role = el("role").value;
+  el("email").value = role === "pimpinan" ? "pimpinan@sorsel.go.id" : "staf@sorsel.go.id";
+  el("password").value = "agenda123";
 }
 
 async function logout() {
