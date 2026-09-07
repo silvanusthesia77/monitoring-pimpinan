@@ -169,7 +169,9 @@ body:not(.app-mode) .page-wrap p {
 .content-area {
   display: grid;
   grid-template-columns: 1fr;
+  grid-auto-rows: max-content;
   align-items: start;
+  align-content: start;
   background: #f5f7fb;
   padding-bottom: 32px;
 }
@@ -481,6 +483,7 @@ body:not(.app-mode) .page-wrap p {
 
 .view-panel {
   min-height: auto;
+  align-self: start;
 }
 
 .panel {
@@ -491,6 +494,7 @@ body:not(.app-mode) .page-wrap p {
   margin: 16px 20px 0;
   padding: 16px 18px 20px;
   min-width: 0;
+  height: auto;
 }
 
 .section-kicker {
@@ -755,6 +759,7 @@ body:not(.app-mode) .page-wrap p {
 .download-link {
   display: inline-flex;
   align-items: center;
+  align-self: flex-start;
   min-height: 32px;
   border-radius: 999px;
   padding: 4px 9px;
