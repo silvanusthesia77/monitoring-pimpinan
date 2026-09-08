@@ -1,7 +1,7 @@
 import { api } from "./api.js";
 import { el, toInputTime } from "./dom.js";
 import { navigateToView, syncViewFromPath } from "./router.js";
-import { clearSessionState, selectedAgenda, setDashboardData, state } from "./state.js";
+import { clearSessionState, selectedAgenda, setDashboardData, setUsers, state } from "./state.js";
 import { render, showApp, showLogin } from "./render.js";
 
 export function bindEvents() {
@@ -20,6 +20,7 @@ export function bindEvents() {
   el("documentationAgendaId").addEventListener("change", selectAgendaFromControl);
   el("reportForm").addEventListener("submit", uploadDocumentation);
   document.addEventListener("click", deleteAgenda);
+  document.addEventListener("click", deleteUser);
   window.addEventListener("popstate", () => {
     if (!state.user) {
       showLogin();
@@ -64,6 +65,11 @@ export function setDefaultDates() {
 async function login(event) {
   event.preventDefault();
   el("loginError").classList.add("hidden");
+  if (hasPasswordSpace(el("password").value)) {
+    el("loginError").textContent = "Password tidak boleh mengandung spasi.";
+    el("loginError").classList.remove("hidden");
+    return;
+  }
 
   try {
     state.user = await api("/api/login", {
@@ -88,6 +94,11 @@ async function login(event) {
 async function register(event) {
   event.preventDefault();
   el("registerError").classList.add("hidden");
+  if (hasPasswordSpace(el("registerPassword").value)) {
+    el("registerError").textContent = "Password tidak boleh mengandung spasi.";
+    el("registerError").classList.remove("hidden");
+    return;
+  }
 
   try {
     state.user = await api("/api/register", {
@@ -114,8 +125,16 @@ async function register(event) {
 
 function fillDemoAccount() {
   const role = el("role").value;
-  el("email").value = role === "pimpinan" ? "sergiodyego45@gmail.com" : "staf@sorsel.go.id";
+  if (role === "admin") {
+    el("email").value = "admin@sorsel.go.id";
+  } else {
+    el("email").value = role === "pimpinan" ? "sergiodyego45@gmail.com" : "staf@sorsel.go.id";
+  }
   el("password").value = "agenda123";
+}
+
+function hasPasswordSpace(password) {
+  return /\s/.test(password);
 }
 
 async function logout() {
@@ -126,15 +145,40 @@ async function logout() {
 }
 
 async function refresh({ alertNew = true } = {}) {
-  const [agendas, notifications] = await Promise.all([
+  const [agendas, notifications, users] = await Promise.all([
     api("/api/agendas"),
     api("/api/notifications"),
+    state.user?.role === "admin" ? api("/api/users") : Promise.resolve([]),
   ]);
   const oldIds = new Set(state.seenNotificationIds);
   setDashboardData(agendas, notifications);
+  setUsers(users);
   render();
   showNotificationAlerts(notifications, oldIds, alertNew);
   state.seenNotificationIds = new Set(notifications.map((notice) => notice.id));
+}
+
+async function deleteUser(event) {
+  const button = event.target.closest(".delete-user-btn");
+  if (!button) return;
+
+  const userID = Number(button.dataset.id);
+  const userName = button.dataset.name || "user ini";
+  if (!userID) {
+    showToast("Hapus user ditolak", "Pilih user terlebih dahulu.");
+    return;
+  }
+  if (!window.confirm(`Hapus ${userName}? Akun ini tidak bisa login lagi.`)) {
+    return;
+  }
+
+  try {
+    await api(`/api/users/${userID}`, { method: "DELETE" });
+    await refresh({ alertNew: false });
+    showToast("User dihapus", "Akun berhasil dihapus dari sistem.");
+  } catch (error) {
+    showToast("Hapus user ditolak", error.message);
+  }
 }
 
 async function deleteAgenda(event) {

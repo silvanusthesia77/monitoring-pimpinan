@@ -20,6 +20,7 @@ const (
 	defaultFrontendDir = "../frontend"
 	defaultSchemaFile  = "../database/schema.sql"
 	defaultPassword    = "agenda123"
+	defaultAdminEmail  = "admin@sorsel.go.id"
 	defaultStaffEmail  = "staf@sorsel.go.id"
 	defaultLeaderEmail = "sergiodyego45@gmail.com"
 	legacyLeaderEmail  = "pimpinan@sorsel.go.id"
@@ -39,10 +40,13 @@ func newApp() (*App, error) {
 	if err := applySchema(db); err != nil {
 		return nil, err
 	}
-	if err := seedUsers(db); err != nil {
+	if err := migrateUserRoleEnum(db); err != nil {
 		return nil, err
 	}
 	if err := migrateDefaultLeaderEmail(db); err != nil {
+		return nil, err
+	}
+	if err := seedUsers(db); err != nil {
 		return nil, err
 	}
 	if err := seedDemoAgendas(db); err != nil {
@@ -69,6 +73,8 @@ func (app *App) routes() http.Handler {
 	mux.HandleFunc("/api/register", app.register)
 	mux.HandleFunc("/api/logout", app.logout)
 	mux.HandleFunc("/api/me", app.me)
+	mux.HandleFunc("/api/users", app.users)
+	mux.HandleFunc("/api/users/", app.userAction)
 	mux.HandleFunc("/api/agendas", app.agendas)
 	mux.HandleFunc("/api/agendas/", app.agendaAction)
 	mux.HandleFunc("/api/notifications", app.notifications)
@@ -118,21 +124,24 @@ func seedUsers(db *sql.DB) error {
 	if err := db.QueryRow("SELECT COUNT(*) FROM users").Scan(&count); err != nil {
 		return err
 	}
-	if count > 0 {
-		return nil
-	}
 
 	users := []User{
-		{Name: "Admin Staf", Email: defaultStaffEmail, Role: roleStaff, Position: "Staf Protokol"},
-		{Name: "Pimpinan Daerah", Email: defaultLeaderEmail, Role: roleLeader, Position: "Pimpinan Kabupaten Sorong Selatan"},
+		{Name: "Administrator", Email: defaultAdminEmail, Role: roleAdmin, Position: "Admin Sistem"},
 	}
+	if count == 0 {
+		users = append(users,
+			User{Name: "Admin Staf", Email: defaultStaffEmail, Role: roleStaff, Position: "Staf Protokol"},
+			User{Name: "Pimpinan Daerah", Email: defaultLeaderEmail, Role: roleLeader, Position: "Pimpinan Kabupaten Sorong Selatan"},
+		)
+	}
+
 	for _, user := range users {
 		hash, err := bcrypt.GenerateFromPassword([]byte(defaultPassword), bcrypt.DefaultCost)
 		if err != nil {
 			return err
 		}
 		_, err = db.Exec(
-			"INSERT INTO users (name, email, password_hash, role, position) VALUES (?, ?, ?, ?, ?)",
+			"INSERT IGNORE INTO users (name, email, password_hash, role, position) VALUES (?, ?, ?, ?, ?)",
 			user.Name, user.Email, string(hash), user.Role, user.Position,
 		)
 		if err != nil {
@@ -140,6 +149,11 @@ func seedUsers(db *sql.DB) error {
 		}
 	}
 	return nil
+}
+
+func migrateUserRoleEnum(db *sql.DB) error {
+	_, err := db.Exec("ALTER TABLE users MODIFY role ENUM('admin', 'staf', 'pimpinan') NOT NULL")
+	return err
 }
 
 func migrateDefaultLeaderEmail(db *sql.DB) error {
@@ -162,9 +176,15 @@ func migrateDefaultLeaderEmail(db *sql.DB) error {
 func seedDemoAgendas(db *sql.DB) error {
 	var staffID, leaderID int64
 	if err := db.QueryRow("SELECT id FROM users WHERE email = ?", defaultStaffEmail).Scan(&staffID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
 		return err
 	}
 	if err := db.QueryRow("SELECT id FROM users WHERE email = ?", defaultLeaderEmail).Scan(&leaderID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
 		return err
 	}
 

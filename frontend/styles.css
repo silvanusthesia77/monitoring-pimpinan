@@ -527,6 +527,25 @@ body:not(.app-mode) .page-wrap p {
   background: currentColor;
 }
 
+.nav-icon-users::before {
+  left: 2px;
+  top: 2px;
+  width: 7px;
+  height: 7px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  box-shadow: 8px 2px 0 -2px currentColor;
+}
+
+.nav-icon-users::after {
+  left: 1px;
+  right: 1px;
+  bottom: 2px;
+  height: 7px;
+  border: 2px solid currentColor;
+  border-radius: 8px 8px 2px 2px;
+}
+
 .view-panel {
   min-height: auto;
   align-self: start;
@@ -1045,6 +1064,38 @@ dd {
   font-weight: 800;
 }
 
+.user-table {
+  display: grid;
+  gap: 8px;
+}
+
+.user-row {
+  width: 100%;
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: minmax(220px, 1.4fr) auto minmax(160px, 0.9fr) auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  background: #fff;
+  color: #1d2433;
+  padding: 10px 12px;
+}
+
+.user-row strong,
+.user-row small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.user-row small {
+  margin-top: 4px;
+  color: #667085;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
 .summary-box {
   min-height: 112px;
   border: 1px solid #e9ecef;
@@ -1113,7 +1164,8 @@ dd {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .agenda-row {
+  .agenda-row,
+  .user-row {
     grid-template-columns: 1fr 1fr;
   }
 }
@@ -1154,7 +1206,8 @@ dd {
     grid-template-columns: 1fr;
   }
 
-  .agenda-row {
+  .agenda-row,
+  .user-row {
     grid-template-columns: 1fr;
   }
 

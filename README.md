@@ -6,7 +6,8 @@ HTML, CSS, serta Tailwind CSS.
 
 ## Fitur
 
-- Login dua aktor: staf dan pimpinan
+- Login tiga aktor: admin, staf, dan pimpinan
+- Admin mengelola user dan dapat menghapus akun user
 - Daftar/mengatur password hanya untuk email yang sudah terdaftar di sistem
 - Staf menginput jadwal kunjungan pimpinan
 - Staf upload undangan dan mengisi keterangan agenda
@@ -24,6 +25,7 @@ HTML, CSS, serta Tailwind CSS.
 
 | Role | Email | Password |
 | --- | --- | --- |
+| Admin | `admin@sorsel.go.id` | `agenda123` |
 | Staf | `staf@sorsel.go.id` | `agenda123` |
 | Pimpinan | `sergiodyego45@gmail.com` | `agenda123` |
 

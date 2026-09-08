@@ -22,6 +22,7 @@ export function render() {
   renderStats();
   renderAgendaList();
   renderAgendaTable();
+  renderUsers();
   syncActiveSelectionForView();
   renderFormSelectors();
   renderReports();
@@ -31,9 +32,9 @@ export function render() {
 }
 
 function renderHeader() {
-  el("activeRole").textContent = state.user.role === "staf" ? "Staf" : "Pimpinan";
+  el("activeRole").textContent = roleLabel(state.user.role);
   el("activeUser").textContent = `${state.user.name}\n${state.user.position}`;
-  el("navbarRole").textContent = `${state.user.name} - ${state.user.role === "staf" ? "Staf" : "Pimpinan"}`;
+  el("navbarRole").textContent = `${state.user.name} - ${roleLabel(state.user.role)}`;
 }
 
 function renderStats() {
@@ -81,16 +82,18 @@ function renderNavigation() {
 
 function renderActiveView() {
   const isStaff = state.user.role === "staf";
+  const isLeader = state.user.role === "pimpinan";
   const allowedViews = navItems().map((item) => item.id);
   if (!allowedViews.includes(state.activeView)) {
     navigateToView("dashboard");
   }
 
   toggleView("dashboardPanel", state.activeView === "dashboard");
+  toggleView("userPanel", state.user.role === "admin" && state.activeView === "users");
   toggleView("agendaPanel", state.activeView === "agenda");
   toggleView("detailPanel", state.activeView === "detail");
   toggleView("staffPanel", isStaff && state.activeView === "input");
-  toggleView("leaderPanel", !isStaff && state.activeView === "validasi");
+  toggleView("leaderPanel", isLeader && state.activeView === "validasi");
   toggleView("documentationPanel", isStaff && state.activeView === "dokumentasi");
   toggleView("reportsPanel", state.activeView === "laporan");
   toggleView("notificationPanel", state.activeView === "notifikasi");
@@ -178,6 +181,35 @@ function renderAgendaTable() {
       render();
     });
   });
+}
+
+function renderUsers() {
+  const table = el("userTable");
+  const count = el("userCount");
+  if (!table || !count) return;
+
+  count.textContent = `${state.users.length} user`;
+  table.innerHTML = state.users.length
+    ? state.users.map(userRow).join("")
+    : `<p class="empty-text">Belum ada user.</p>`;
+}
+
+function userRow(user) {
+  return `
+    <article class="user-row">
+      <span>
+        <strong>${escapeHtml(user.name)}</strong>
+        <small>${escapeHtml(user.email)}</small>
+      </span>
+      <span class="badge">${roleLabel(user.role)}</span>
+      <span>${escapeHtml(user.position)}</span>
+      ${
+        user.can_delete
+          ? `<button class="button-danger delete-user-btn" data-id="${user.id}" data-name="${escapeHtml(user.name)}" type="button">Hapus</button>`
+          : `<span class="badge">Akun aktif</span>`
+      }
+    </article>
+  `;
 }
 
 function renderNotifications() {
@@ -393,6 +425,17 @@ function navItems() {
     ];
   }
 
+  if (state.user.role === "admin") {
+    return [
+      common[0],
+      { id: "users", label: "Kelola User", icon: "users", count: state.users.length },
+      common[1],
+      common[2],
+      common[3],
+      common[4],
+    ];
+  }
+
   return [
     common[0],
     { id: "validasi", label: "Validasi", icon: "check" },
@@ -401,6 +444,12 @@ function navItems() {
     common[3],
     common[4],
   ];
+}
+
+function roleLabel(role) {
+  if (role === "admin") return "Admin";
+  if (role === "staf") return "Staf";
+  return "Pimpinan";
 }
 
 function toggleView(id, visible) {

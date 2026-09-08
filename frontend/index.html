@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/styles.css?v=20260909-registered-email-auth" />
+    <link rel="stylesheet" href="/styles.css?v=20260909-admin-users" />
   </head>
   <body class="antialiased">
     <main>
@@ -40,6 +40,7 @@
             <select id="role" class="field">
               <option value="staf">Staf</option>
               <option value="pimpinan">Pimpinan</option>
+              <option value="admin">Admin</option>
             </select>
           </label>
           <label class="form-label">
@@ -60,6 +61,7 @@
           </button>
           <div class="demo-accounts">
             <strong>Akun demo</strong>
+            <p>Admin: admin@sorsel.go.id / agenda123</p>
             <p>Staf: staf@sorsel.go.id / agenda123</p>
             <p>Pimpinan: sergiodyego45@gmail.com / agenda123</p>
           </div>
@@ -71,6 +73,7 @@
             <select id="registerRole" class="field">
               <option value="staf">Staf</option>
               <option value="pimpinan">Pimpinan</option>
+              <option value="admin">Admin</option>
             </select>
           </label>
           <label class="form-label">Nama lengkap<input id="registerName" class="field" required /></label>
@@ -160,6 +163,17 @@
                   <p>Keputusan pimpinan masih bisa ditarik selama kegiatan belum masuk batas kurang dari 24 jam.</p>
                 </div>
               </div>
+            </section>
+
+            <section id="userPanel" class="view-panel panel hidden">
+              <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p class="section-kicker">Admin</p>
+                  <h2 class="mt-1 text-xl font-black">Kelola User</h2>
+                </div>
+                <span id="userCount" class="badge">0 user</span>
+              </div>
+              <div id="userTable" class="user-table"></div>
             </section>
 
             <section id="staffPanel" class="view-panel panel hidden">
@@ -259,6 +273,6 @@
         </div>
       </section>
     </main>
-    <script type="module" src="/app.js?v=20260909-registered-email-auth"></script>
+    <script type="module" src="/app.js?v=20260909-admin-users"></script>
   </body>
 </html>

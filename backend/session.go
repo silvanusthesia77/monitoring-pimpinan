@@ -35,3 +35,13 @@ func (store *SessionStore) Delete(token string) {
 	delete(store.sessions, token)
 	store.mu.Unlock()
 }
+
+func (store *SessionStore) DeleteUser(userID int64) {
+	store.mu.Lock()
+	for token, user := range store.sessions {
+		if user.ID == userID {
+			delete(store.sessions, token)
+		}
+	}
+	store.mu.Unlock()
+}

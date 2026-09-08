@@ -25,9 +25,14 @@ func (app *App) login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	req.Email = strings.TrimSpace(strings.ToLower(req.Email))
-	if req.Role != roleStaff && req.Role != roleLeader {
+	if !validRole(req.Role) {
 		expireSessionCookie(w)
 		badRequest(w, "Role wajib dipilih")
+		return
+	}
+	if strings.ContainsAny(req.Password, " \t\r\n") {
+		expireSessionCookie(w)
+		badRequest(w, "Password tidak boleh mengandung spasi")
 		return
 	}
 
@@ -85,12 +90,16 @@ func (app *App) register(w http.ResponseWriter, r *http.Request) {
 		badRequest(w, "Nama, email, password, dan jabatan wajib diisi")
 		return
 	}
-	if req.Role != roleStaff && req.Role != roleLeader {
-		badRequest(w, "Role harus staf atau pimpinan")
+	if !validRole(req.Role) {
+		badRequest(w, "Role harus admin, staf, atau pimpinan")
 		return
 	}
 	if len(req.Password) < 6 {
 		badRequest(w, "Password minimal 6 karakter")
+		return
+	}
+	if strings.ContainsAny(req.Password, " \t\r\n") {
+		badRequest(w, "Password tidak boleh mengandung spasi")
 		return
 	}
 
@@ -178,4 +187,8 @@ func (app *App) findUserByEmail(email string) (User, string, error) {
 
 func expireSessionCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{Name: sessionCookie, Path: "/", MaxAge: -1})
+}
+
+func validRole(role string) bool {
+	return role == roleAdmin || role == roleStaff || role == roleLeader
 }
