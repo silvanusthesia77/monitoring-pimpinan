@@ -304,12 +304,12 @@ function updateValidationControls(agenda) {
   const validationHint = el("validationHint");
 
   if (!agenda) {
-    validationSubmit.disabled = true;
+    validationSubmit.disabled = false;
     validationHint.textContent = "Belum ada agenda yang dapat dipilih untuk validasi.";
     return;
   }
 
-  validationSubmit.disabled = !agenda.can_validate;
+  validationSubmit.disabled = false;
   validationSubmit.textContent = agenda.status === "menunggu" ? "Validasi" : "Simpan Perubahan";
   if (agenda.can_validate && agenda.status === "menunggu") {
     validationHint.textContent = "Agenda belum divalidasi dan masih bisa diproses pimpinan.";
@@ -336,13 +336,13 @@ function updateDocumentationControls(agenda) {
   const reportAgendaBox = el("documentationAgendaBox");
 
   if (!agenda) {
-    reportSubmit.disabled = true;
+    reportSubmit.disabled = false;
     reportAgendaBox.innerHTML = `<span>Agenda aktif</span><strong>Belum ada agenda dipilih</strong>`;
     reportHint.textContent = "Pilih agenda terlebih dahulu dari dropdown.";
     return;
   }
 
-  reportSubmit.disabled = !agenda.can_upload_documentation;
+  reportSubmit.disabled = false;
   reportAgendaBox.innerHTML = `
     <span>Agenda aktif</span>
     <strong>${escapeHtml(agenda.title)}</strong>

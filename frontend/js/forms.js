@@ -151,7 +151,10 @@ async function createAgenda(event) {
 async function validateAgenda(event) {
   event.preventDefault();
   const agenda = selectedAgendaByControl("validationAgendaId");
-  if (!agenda) return;
+  if (!agenda) {
+    showToast("Validasi ditolak", "Pilih agenda terlebih dahulu.");
+    return;
+  }
 
   const form = new FormData(event.target);
   try {
@@ -174,7 +177,10 @@ async function validateAgenda(event) {
 async function uploadDocumentation(event) {
   event.preventDefault();
   const agenda = selectedAgendaByControl("documentationAgendaId");
-  if (!agenda) return;
+  if (!agenda) {
+    showToast("Upload ditolak", "Pilih agenda terlebih dahulu.");
+    return;
+  }
 
   try {
     await api(`/api/agendas/${agenda.id}/documentation`, {
