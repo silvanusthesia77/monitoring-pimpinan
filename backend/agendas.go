@@ -115,14 +115,17 @@ func (app *App) createAgenda(w http.ResponseWriter, r *http.Request, user User) 
 	}
 
 	var invitationID sql.NullInt64
-	if fh, ok := firstUploadedFile(r, "invitation"); ok {
-		fileID, err := app.saveUpload(fh, user.ID)
-		if err != nil {
-			writeError(w, http.StatusInternalServerError, "Gagal menyimpan undangan")
-			return
-		}
-		invitationID = sql.NullInt64{Int64: fileID, Valid: true}
+	fh, ok := firstUploadedFile(r, "invitation")
+	if !ok || fh.Size == 0 {
+		badRequest(w, "File undangan wajib diunggah")
+		return
 	}
+	fileID, err := app.saveUpload(fh, user.ID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Gagal menyimpan undangan")
+		return
+	}
+	invitationID = sql.NullInt64{Int64: fileID, Valid: true}
 
 	result, err := app.db.Exec(`
 		INSERT INTO agendas

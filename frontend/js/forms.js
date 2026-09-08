@@ -137,6 +137,12 @@ async function refresh({ alertNew = true } = {}) {
 
 async function createAgenda(event) {
   event.preventDefault();
+  const errorMessage = agendaFormError(event.target);
+  if (errorMessage) {
+    showToast("Agenda belum lengkap", errorMessage);
+    return;
+  }
+
   try {
     await api("/api/agendas", { method: "POST", body: new FormData(event.target) });
     event.target.reset();
@@ -146,6 +152,38 @@ async function createAgenda(event) {
   } catch (error) {
     showToast("Gagal menyimpan agenda", error.message);
   }
+}
+
+function agendaFormError(form) {
+  const requiredFields = [
+    ["title", "Nama kegiatan"],
+    ["location", "Lokasi"],
+    ["start_at", "Waktu mulai"],
+    ["end_at", "Waktu selesai"],
+    ["organizer", "Penyelenggara"],
+    ["staff_note", "Keterangan"],
+  ];
+
+  for (const [name, label] of requiredFields) {
+    if (!String(form.elements[name].value || "").trim()) {
+      return `${label} wajib diisi.`;
+    }
+  }
+
+  if (!form.elements.invitation.files.length) {
+    return "File undangan wajib diunggah.";
+  }
+
+  const startAt = new Date(form.elements.start_at.value);
+  const endAt = new Date(form.elements.end_at.value);
+  if (Number.isNaN(startAt.getTime()) || Number.isNaN(endAt.getTime())) {
+    return "Waktu mulai dan selesai wajib valid.";
+  }
+  if (endAt <= startAt) {
+    return "Waktu selesai harus setelah waktu mulai.";
+  }
+
+  return "";
 }
 
 async function validateAgenda(event) {

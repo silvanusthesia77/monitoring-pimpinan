@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/styles.css?v=20260908-no-disabled-actions" />
+    <link rel="stylesheet" href="/styles.css?v=20260909-required-agenda" />
   </head>
   <body class="antialiased">
     <main>
@@ -170,7 +170,7 @@
                 <label class="form-label">Mulai<input name="start_at" class="field" type="datetime-local" required /></label>
                 <label class="form-label">Selesai<input name="end_at" class="field" type="datetime-local" required /></label>
                 <label class="form-label">Penyelenggara<input name="organizer" class="field" required /></label>
-                <label class="form-label">Upload undangan<input name="invitation" class="field file-field" type="file" /></label>
+                <label class="form-label">Upload undangan<input name="invitation" class="field file-field" type="file" required /></label>
                 <label class="form-label md:col-span-2">Keterangan<textarea name="staff_note" class="field min-h-28" required></textarea></label>
                 <button class="button-primary md:col-span-2" type="submit">Submit ke Pimpinan</button>
               </form>
@@ -257,6 +257,6 @@
         </div>
       </section>
     </main>
-    <script type="module" src="/app.js?v=20260908-no-disabled-actions"></script>
+    <script type="module" src="/app.js?v=20260909-required-agenda"></script>
   </body>
 </html>
