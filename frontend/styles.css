@@ -693,12 +693,6 @@ body:not(.app-mode) .page-wrap p {
   background: #326abc;
 }
 
-.button-primary:disabled,
-.button-secondary:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
 .button-secondary {
   border: 1px solid #dee2e6;
   background: #fff;

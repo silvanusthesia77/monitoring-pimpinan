@@ -181,6 +181,10 @@ async function uploadDocumentation(event) {
     showToast("Upload ditolak", "Pilih agenda terlebih dahulu.");
     return;
   }
+  if (!agenda.can_upload_documentation) {
+    showToast("Upload ditolak", documentationErrorMessage(agenda));
+    return;
+  }
 
   try {
     await api(`/api/agendas/${agenda.id}/documentation`, {
@@ -193,6 +197,16 @@ async function uploadDocumentation(event) {
   } catch (error) {
     showToast("Upload ditolak", error.message);
   }
+}
+
+function documentationErrorMessage(agenda) {
+  if (agenda.status === "menunggu") {
+    return "Agenda harus divalidasi pimpinan sebelum laporan dibuat.";
+  }
+  if (agenda.documentation) {
+    return "Laporan untuk agenda ini sudah tersimpan dan bisa dilihat di menu Laporan.";
+  }
+  return "Laporan baru bisa dibuat setelah waktu selesai kegiatan.";
 }
 
 function selectAgendaFromControl(event) {
