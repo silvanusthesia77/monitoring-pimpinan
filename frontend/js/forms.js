@@ -8,6 +8,8 @@ export function bindEvents() {
   el("loginForm").addEventListener("submit", login);
   el("registerForm").addEventListener("submit", register);
   el("role").addEventListener("change", fillDemoAccount);
+  el("email").addEventListener("input", resetLoginVerification);
+  el("password").addEventListener("input", resetLoginVerification);
   el("showLoginForm").addEventListener("click", () => showAuthForm("login"));
   el("showRegisterForm").addEventListener("click", () => showAuthForm("register"));
   el("logoutBtn").addEventListener("click", logout);
@@ -73,21 +75,36 @@ async function login(event) {
   }
 
   try {
-    state.user = await api("/api/login", {
+    const result = await api("/api/login", {
       method: "POST",
       body: JSON.stringify({
         role: el("role").value,
         email: el("email").value,
         password: el("password").value,
+        code: el("loginCode").value,
       }),
       headers: { "Content-Type": "application/json" },
     });
+    if (result.pending_verification) {
+      el("loginCodeLabel").classList.remove("hidden");
+      el("loginSubmit").textContent = "Verifikasi & Masuk";
+      el("loginError").textContent = result.message || "Kode OTP login sudah dikirim ke Gmail.";
+      el("loginError").classList.remove("hidden");
+      el("loginError").classList.remove("bg-red-50", "text-red-700");
+      el("loginError").classList.add("bg-blue-50", "text-blue-700");
+      return;
+    }
+
+    state.user = result;
+    resetLoginVerification();
     await refresh({ alertNew: false });
     navigateToView(defaultView());
     showApp();
     startNotificationPolling();
   } catch (error) {
     el("loginError").textContent = error.message;
+    el("loginError").classList.add("bg-red-50", "text-red-700");
+    el("loginError").classList.remove("bg-blue-50", "text-blue-700");
     el("loginError").classList.remove("hidden");
   }
 }
@@ -147,6 +164,7 @@ function fillDemoAccount() {
     el("email").value = role === "pimpinan" ? "sergiodyego45@gmail.com" : "staf@sorsel.go.id";
   }
   el("password").value = "agenda123";
+  resetLoginVerification();
 }
 
 function hasPasswordSpace(password) {
@@ -159,6 +177,14 @@ function resetRegisterVerification() {
   el("registerSubmit").textContent = "Kirim Kode Verifikasi";
   el("registerError").classList.add("hidden", "bg-red-50", "text-red-700");
   el("registerError").classList.remove("bg-blue-50", "text-blue-700");
+}
+
+function resetLoginVerification() {
+  el("loginCode").value = "";
+  el("loginCodeLabel").classList.add("hidden");
+  el("loginSubmit").textContent = "Masuk";
+  el("loginError").classList.add("hidden", "bg-red-50", "text-red-700");
+  el("loginError").classList.remove("bg-blue-50", "text-blue-700");
 }
 
 async function logout() {
@@ -422,6 +448,7 @@ function showAuthForm(mode) {
   el("authTitle").textContent = isRegister ? "Daftar pengguna" : "Login pengguna";
   el("loginError").classList.add("hidden");
   el("registerError").classList.add("hidden");
+  if (isRegister) resetLoginVerification();
   if (!isRegister) resetRegisterVerification();
 }
 
