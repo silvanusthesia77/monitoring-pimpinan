@@ -85,6 +85,8 @@ func (app *App) agendaAction(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		app.uploadDocumentation(w, r, id, user)
+	case "report-pdf":
+		app.downloadReportPDF(w, r, id)
 	default:
 		http.NotFound(w, r)
 	}

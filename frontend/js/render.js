@@ -235,6 +235,7 @@ function agendaDownloads(agenda) {
   return [
     agenda.invitation ? downloadLink("Download undangan", agenda.invitation) : muted("Undangan belum diunggah"),
     agenda.documentation ? downloadLink("Download dokumentasi", agenda.documentation) : muted("Dokumentasi belum tersedia"),
+    agenda.documentation ? reportPDFLink(agenda) : "",
   ].join("");
 }
 
@@ -267,6 +268,7 @@ function reportCard(agenda) {
         ${detailRow("Ringkasan laporan", agenda.report_note || "Tidak ada ringkasan laporan.")}
       </dl>
       <div class="report-actions">
+        ${reportPDFLink(agenda)}
         ${downloadLink("Download dokumentasi", agenda.documentation)}
       </div>
     </article>
@@ -289,6 +291,10 @@ function detailRow(label, value) {
 
 function downloadLink(label, file) {
   return `<a class="download-link" href="/api/files/${file.id}/download">${label}: ${escapeHtml(file.original_name)}</a>`;
+}
+
+function reportPDFLink(agenda) {
+  return `<a class="download-link" href="/api/agendas/${agenda.id}/report-pdf">Download PDF Berita Acara</a>`;
 }
 
 function muted(text) {

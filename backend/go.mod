@@ -7,4 +7,7 @@ require (
 	golang.org/x/crypto v0.31.0
 )
 
-require filippo.io/edwards25519 v1.1.0 // indirect
+require (
+	filippo.io/edwards25519 v1.1.0 // indirect
+	github.com/phpdave11/gofpdf v1.4.3 // indirect
+)
