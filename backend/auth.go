@@ -1,9 +1,11 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"strings"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -78,6 +80,7 @@ func (app *App) register(w http.ResponseWriter, r *http.Request) {
 		Password string `json:"password"`
 		Role     string `json:"role"`
 		Position string `json:"position"`
+		Code     string `json:"code"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		badRequest(w, "Format daftar tidak valid")
@@ -92,8 +95,12 @@ func (app *App) register(w http.ResponseWriter, r *http.Request) {
 		badRequest(w, "Nama, email, password, dan jabatan wajib diisi")
 		return
 	}
-	if !validRole(req.Role) {
-		badRequest(w, "Role harus admin, staf, atau pimpinan")
+	if req.Role != roleStaff && req.Role != roleLeader {
+		badRequest(w, "Daftar hanya untuk role staf atau pimpinan")
+		return
+	}
+	if !strings.HasSuffix(req.Email, "@gmail.com") {
+		badRequest(w, "Email daftar harus akun Gmail")
 		return
 	}
 	if len(req.Password) < 6 {
@@ -105,38 +112,134 @@ func (app *App) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if strings.TrimSpace(req.Code) == "" {
+		app.sendRegistrationCode(w, req.Name, req.Email, req.Password, req.Role, req.Position)
+		return
+	}
+
+	app.verifyRegistration(w, req.Name, req.Email, req.Password, req.Role, req.Position, req.Code)
+}
+
+func (app *App) sendRegistrationCode(w http.ResponseWriter, name, email, password, role, position string) {
+	if !app.mailer.Enabled() {
+		writeError(w, http.StatusServiceUnavailable, "SMTP Gmail belum dikonfigurasi, kode verifikasi tidak bisa dikirim")
+		return
+	}
+
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "Gagal membuat password")
 		return
 	}
 
-	existingUser, _, err := app.findUserByEmail(req.Email)
+	code, err := numericCode(6)
 	if err != nil {
-		writeError(w, http.StatusForbidden, "Email belum terdaftar di sistem")
+		writeError(w, http.StatusInternalServerError, "Gagal membuat kode verifikasi")
 		return
 	}
-	if existingUser.Role != req.Role {
+	codeHash, err := bcrypt.GenerateFromPassword([]byte(code), bcrypt.DefaultCost)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Gagal menyimpan kode verifikasi")
+		return
+	}
+
+	if _, err := app.mailer.Send([]string{email}, "Kode verifikasi daftar Agenda Monitor", "Kode verifikasi akun Anda: "+code+". Kode berlaku 10 menit."); err != nil {
+		writeError(w, http.StatusBadGateway, "Gagal mengirim kode ke Gmail")
+		return
+	}
+
+	_, err = app.db.Exec("DELETE FROM registration_codes WHERE expires_at < NOW()")
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Gagal membersihkan kode lama")
+		return
+	}
+
+	_, err = app.db.Exec(`
+		INSERT INTO registration_codes (email, code_hash, name, password_hash, role, position, expires_at)
+		VALUES (?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE))
+		ON DUPLICATE KEY UPDATE
+			code_hash = VALUES(code_hash),
+			name = VALUES(name),
+			password_hash = VALUES(password_hash),
+			role = VALUES(role),
+			position = VALUES(position),
+			expires_at = VALUES(expires_at)`,
+		email, string(codeHash), name, string(passwordHash), role, position,
+	)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Gagal menyimpan kode verifikasi")
+		return
+	}
+
+	writeJSON(w, http.StatusAccepted, map[string]any{
+		"pending_verification": true,
+		"message":              "Kode verifikasi sudah dikirim ke Gmail",
+	})
+}
+
+func (app *App) verifyRegistration(w http.ResponseWriter, name, email, password, role, position, code string) {
+	var savedName, savedPasswordHash, savedRole, savedPosition, codeHash string
+	var expiresAt time.Time
+	err := app.db.QueryRow(`
+		SELECT name, password_hash, role, position, code_hash, expires_at
+		FROM registration_codes
+		WHERE email = ?`, email).
+		Scan(&savedName, &savedPasswordHash, &savedRole, &savedPosition, &codeHash, &expiresAt)
+	if err == sql.ErrNoRows {
+		badRequest(w, "Kode verifikasi belum diminta atau sudah kadaluarsa")
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Gagal membaca kode verifikasi")
+		return
+	}
+	if time.Now().After(expiresAt) {
+		_, _ = app.db.Exec("DELETE FROM registration_codes WHERE email = ?", email)
+		badRequest(w, "Kode verifikasi sudah kadaluarsa")
+		return
+	}
+	if bcrypt.CompareHashAndPassword([]byte(codeHash), []byte(strings.TrimSpace(code))) != nil {
+		badRequest(w, "Kode verifikasi salah")
+		return
+	}
+	if savedRole != role || savedName != name || savedPosition != position {
+		badRequest(w, "Data daftar berubah, kirim ulang kode verifikasi")
+		return
+	}
+
+	existingUser, _, err := app.findUserByEmail(email)
+	if err == nil && existingUser.Role != role {
 		writeError(w, http.StatusUnauthorized, "Role tidak sesuai dengan email terdaftar")
 		return
 	}
-
-	_, err = app.db.Exec(
-		"UPDATE users SET name = ?, position = ?, password_hash = ? WHERE id = ?",
-		req.Name, req.Position, string(hash), existingUser.ID,
-	)
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, "Gagal memperbarui akun")
+	if err != nil && err != sql.ErrNoRows {
+		writeError(w, http.StatusInternalServerError, "Gagal memeriksa email")
 		return
 	}
 
-	user := User{
-		ID:       existingUser.ID,
-		Name:     req.Name,
-		Email:    req.Email,
-		Role:     req.Role,
-		Position: req.Position,
+	user := User{Name: name, Email: email, Role: role, Position: position}
+	if existingUser.ID > 0 {
+		_, err = app.db.Exec(
+			"UPDATE users SET name = ?, position = ?, password_hash = ? WHERE id = ?",
+			name, position, savedPasswordHash, existingUser.ID,
+		)
+		user.ID = existingUser.ID
+	} else {
+		result, insertErr := app.db.Exec(
+			"INSERT INTO users (name, email, password_hash, role, position) VALUES (?, ?, ?, ?, ?)",
+			name, email, savedPasswordHash, role, position,
+		)
+		err = insertErr
+		if err == nil {
+			user.ID, _ = result.LastInsertId()
+		}
 	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Gagal menyimpan akun")
+		return
+	}
+	_, _ = app.db.Exec("DELETE FROM registration_codes WHERE email = ?", email)
+
 	token, err := app.sessions.Create(user)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "Akun dibuat, tetapi sesi gagal dibuat")

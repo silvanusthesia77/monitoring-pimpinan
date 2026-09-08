@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"math/big"
 	"os"
 	"strings"
 	"time"
@@ -26,6 +27,18 @@ func randomToken() (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(bytes), nil
+}
+
+func numericCode(length int) (string, error) {
+	var builder strings.Builder
+	for builder.Len() < length {
+		value, err := rand.Int(rand.Reader, big.NewInt(10))
+		if err != nil {
+			return "", err
+		}
+		builder.WriteString(value.String())
+	}
+	return builder.String(), nil
 }
 
 func env(key, fallback string) string {

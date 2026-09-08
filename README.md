@@ -8,7 +8,7 @@ HTML, CSS, serta Tailwind CSS.
 
 - Login tiga aktor: admin, staf, dan pimpinan
 - Admin mengelola user dan dapat menghapus akun user
-- Daftar/mengatur password hanya untuk email yang sudah terdaftar di sistem
+- Daftar staf/pimpinan memakai verifikasi kode OTP ke akun Gmail aktif
 - Staf menginput jadwal kunjungan pimpinan
 - Staf upload undangan dan mengisi keterangan agenda
 - Pimpinan menerima alert dan email saat agenda disubmit
@@ -29,8 +29,9 @@ HTML, CSS, serta Tailwind CSS.
 | Staf | `staf@sorsel.go.id` | `agenda123` |
 | Pimpinan | `sergiodyego45@gmail.com` | `agenda123` |
 
-Tab `Daftar` dipakai untuk membuat atau mengganti password aplikasi pada email
-yang sudah terdaftar di sistem. Email bebas yang belum terdaftar akan ditolak.
+Tab `Daftar` dipakai untuk staf/pimpinan dengan akun Gmail aktif. Sistem akan
+mengirim kode verifikasi ke Gmail tersebut, lalu akun dibuat setelah kode benar.
+Admin memakai akun bawaan dan mengelola user dari menu `Kelola User`.
 
 ## Menjalankan Dengan Docker
 
@@ -94,7 +95,8 @@ Email asli dikirim hanya untuk notifikasi yang memang ditujukan ke pimpinan, mis
 saat staf submit agenda baru. Akun pimpinan default memakai `sergiodyego45@gmail.com`.
 
 Password login aplikasi tetap password akun aplikasi, misalnya `agenda123` atau
-password yang dibuat sendiri dari tab `Daftar`. Untuk SMTP Gmail, gunakan
+password yang dibuat sendiri dari tab `Daftar`. Verifikasi daftar juga memakai
+SMTP Gmail untuk mengirim kode OTP. Untuk SMTP Gmail, gunakan
 **App Password** khusus pengiriman email, bukan password login Gmail biasa. Setelah
 App Password dibuat, jalankan backend dengan environment berikut:
 

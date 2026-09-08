@@ -13,6 +13,7 @@ export function bindEvents() {
   el("logoutBtn").addEventListener("click", logout);
   el("togglePassword").addEventListener("click", togglePassword);
   el("toggleRegisterPassword").addEventListener("click", () => togglePasswordField("registerPassword", "toggleRegisterPassword"));
+  el("registerEmail").addEventListener("input", resetRegisterVerification);
   el("agendaForm").addEventListener("submit", createAgenda);
   el("validationForm").addEventListener("submit", validateAgenda);
   el("pullbackSubmit").addEventListener("click", pullBackValidation);
@@ -101,7 +102,7 @@ async function register(event) {
   }
 
   try {
-    state.user = await api("/api/register", {
+    const result = await api("/api/register", {
       method: "POST",
       body: JSON.stringify({
         role: el("registerRole").value,
@@ -109,16 +110,31 @@ async function register(event) {
         position: el("registerPosition").value,
         email: el("registerEmail").value,
         password: el("registerPassword").value,
+        code: el("registerCode").value,
       }),
       headers: { "Content-Type": "application/json" },
     });
+    if (result.pending_verification) {
+      el("registerCodeLabel").classList.remove("hidden");
+      el("registerSubmit").textContent = "Verifikasi & Masuk";
+      el("registerError").textContent = result.message || "Kode verifikasi sudah dikirim ke Gmail.";
+      el("registerError").classList.remove("hidden");
+      el("registerError").classList.remove("bg-red-50", "text-red-700");
+      el("registerError").classList.add("bg-blue-50", "text-blue-700");
+      return;
+    }
+
+    state.user = result;
     event.target.reset();
+    resetRegisterVerification();
     await refresh({ alertNew: false });
     navigateToView(defaultView());
     showApp();
     startNotificationPolling();
   } catch (error) {
     el("registerError").textContent = error.message;
+    el("registerError").classList.add("bg-red-50", "text-red-700");
+    el("registerError").classList.remove("bg-blue-50", "text-blue-700");
     el("registerError").classList.remove("hidden");
   }
 }
@@ -135,6 +151,14 @@ function fillDemoAccount() {
 
 function hasPasswordSpace(password) {
   return /\s/.test(password);
+}
+
+function resetRegisterVerification() {
+  el("registerCode").value = "";
+  el("registerCodeLabel").classList.add("hidden");
+  el("registerSubmit").textContent = "Kirim Kode Verifikasi";
+  el("registerError").classList.add("hidden", "bg-red-50", "text-red-700");
+  el("registerError").classList.remove("bg-blue-50", "text-blue-700");
 }
 
 async function logout() {
@@ -398,6 +422,7 @@ function showAuthForm(mode) {
   el("authTitle").textContent = isRegister ? "Daftar pengguna" : "Login pengguna";
   el("loginError").classList.add("hidden");
   el("registerError").classList.add("hidden");
+  if (!isRegister) resetRegisterVerification();
 }
 
 function startNotificationPolling() {
