@@ -266,21 +266,23 @@ async function pullBackValidation() {
 async function uploadDocumentation(event) {
   event.preventDefault();
   const agenda = selectedAgendaByControl("documentationAgendaId");
+  const form = event.target;
   if (!agenda) {
     showToast("Upload ditolak", "Pilih agenda terlebih dahulu.");
     return;
   }
-  if (!agenda.can_upload_documentation) {
-    showToast("Upload ditolak", documentationErrorMessage(agenda));
+  const errorMessage = documentationFormError(agenda, form);
+  if (errorMessage) {
+    showToast("Upload ditolak", errorMessage);
     return;
   }
 
   try {
     await api(`/api/agendas/${agenda.id}/documentation`, {
       method: "POST",
-      body: new FormData(event.target),
+      body: new FormData(form),
     });
-    event.target.reset();
+    form.reset();
     await refresh({ alertNew: false });
     showToast("Laporan tersimpan", "Dokumentasi kegiatan sudah dapat dilihat dan didownload.");
   } catch (error) {
@@ -288,14 +290,20 @@ async function uploadDocumentation(event) {
   }
 }
 
-function documentationErrorMessage(agenda) {
+function documentationFormError(agenda, form) {
   if (agenda.status === "menunggu") {
     return "Agenda harus divalidasi pimpinan sebelum laporan dibuat.";
   }
   if (agenda.documentation) {
     return "Laporan untuk agenda ini sudah tersimpan dan bisa dilihat di menu Laporan.";
   }
-  return "Agenda sudah divalidasi. Lengkapi dokumentasi dan ringkasan laporan.";
+  if (!form.elements.documentation.files.length) {
+    return "File dokumentasi wajib diunggah.";
+  }
+  if (!String(form.elements.report_note.value || "").trim()) {
+    return "Ringkasan laporan wajib diisi.";
+  }
+  return "";
 }
 
 function selectAgendaFromControl(event) {

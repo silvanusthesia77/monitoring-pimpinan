@@ -362,7 +362,7 @@ function updateDocumentationControls(agenda) {
   } else if (agenda.documentation) {
     reportHint.textContent = "Dokumentasi sudah tersimpan dan dapat didownload pada detail agenda.";
   } else {
-    reportHint.textContent = "Upload dokumentasi dibuka setelah waktu selesai kegiatan.";
+    reportHint.textContent = "Agenda sudah divalidasi. Lengkapi dokumentasi dan ringkasan laporan.";
   }
 }
 
