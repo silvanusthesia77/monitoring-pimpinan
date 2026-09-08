@@ -25,9 +25,10 @@ func (app *App) login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	req.Email = strings.TrimSpace(strings.ToLower(req.Email))
+	req.Role = strings.TrimSpace(strings.ToLower(req.Role))
 	if !validRole(req.Role) {
 		expireSessionCookie(w)
-		badRequest(w, "Role wajib dipilih")
+		badRequest(w, "Role harus admin, staf, atau pimpinan")
 		return
 	}
 	if strings.ContainsAny(req.Password, " \t\r\n") {
@@ -85,6 +86,7 @@ func (app *App) register(w http.ResponseWriter, r *http.Request) {
 
 	req.Name = strings.TrimSpace(req.Name)
 	req.Email = strings.TrimSpace(strings.ToLower(req.Email))
+	req.Role = strings.TrimSpace(strings.ToLower(req.Role))
 	req.Position = strings.TrimSpace(req.Position)
 	if req.Name == "" || req.Email == "" || req.Password == "" || req.Position == "" {
 		badRequest(w, "Nama, email, password, dan jabatan wajib diisi")
