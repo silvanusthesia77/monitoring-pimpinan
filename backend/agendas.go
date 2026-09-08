@@ -53,6 +53,19 @@ func (app *App) agendaAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if action == "" {
+		if r.Method != http.MethodDelete {
+			methodNotAllowed(w)
+			return
+		}
+		if user.Role != roleLeader {
+			forbidden(w)
+			return
+		}
+		app.deleteAgenda(w, id)
+		return
+	}
+
 	switch action {
 	case "validation":
 		if user.Role != roleLeader {
@@ -207,6 +220,28 @@ func (app *App) validateAgenda(w http.ResponseWriter, r *http.Request, id int64,
 	writeJSON(w, http.StatusOK, agenda)
 }
 
+func (app *App) deleteAgenda(w http.ResponseWriter, id int64) {
+	agenda, err := app.getAgenda(id)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "Agenda tidak ditemukan")
+		return
+	}
+
+	result, err := app.db.Exec("DELETE FROM agendas WHERE id = ?", id)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Gagal menghapus agenda")
+		return
+	}
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		writeError(w, http.StatusNotFound, "Agenda tidak ditemukan")
+		return
+	}
+
+	app.notifyRole(roleStaff, "Agenda dihapus pimpinan", agenda.Title+" telah dihapus dari sistem.", false)
+	writeJSON(w, http.StatusOK, map[string]string{"message": "Agenda berhasil dihapus"})
+}
+
 func (app *App) pullBackAgenda(w http.ResponseWriter, r *http.Request, id int64) {
 	if r.Method != http.MethodPost {
 		methodNotAllowed(w)
@@ -341,7 +376,7 @@ func scanAgenda(scanner agendaScanner) (Agenda, error) {
 func parseAgendaAction(w http.ResponseWriter, path string) (int64, string, bool) {
 	trimmed := strings.TrimPrefix(path, "/api/agendas/")
 	parts := strings.Split(strings.Trim(trimmed, "/"), "/")
-	if len(parts) != 2 {
+	if len(parts) < 1 || len(parts) > 2 || parts[0] == "" {
 		return 0, "", false
 	}
 
@@ -349,6 +384,9 @@ func parseAgendaAction(w http.ResponseWriter, path string) (int64, string, bool)
 	if err != nil {
 		badRequest(w, "ID agenda tidak valid")
 		return 0, "", false
+	}
+	if len(parts) == 1 {
+		return id, "", true
 	}
 	return id, parts[1], true
 }

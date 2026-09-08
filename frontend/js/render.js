@@ -118,7 +118,7 @@ function renderDetail() {
   status.textContent = statusLabel(agenda);
   status.className = `badge ${agenda.phase || agenda.status}`;
   body.innerHTML = agendaDetails(agenda);
-  downloads.innerHTML = agendaDownloads(agenda);
+  downloads.innerHTML = agendaDownloads(agenda) + leaderDeleteAction(agenda);
   updateValidationControls(agenda);
   updateDocumentationControls(agenda);
 }
@@ -236,6 +236,11 @@ function agendaDownloads(agenda) {
     agenda.invitation ? downloadLink("Download undangan", agenda.invitation) : muted("Undangan belum diunggah"),
     agenda.documentation ? downloadLink("Download dokumentasi", agenda.documentation) : muted("Dokumentasi belum tersedia"),
   ].join("");
+}
+
+function leaderDeleteAction(agenda) {
+  if (state.user.role !== "pimpinan") return "";
+  return `<button id="deleteAgendaBtn" class="button-danger" data-id="${agenda.id}" data-title="${escapeHtml(agenda.title)}" type="button">Hapus Agenda</button>`;
 }
 
 function renderReports() {

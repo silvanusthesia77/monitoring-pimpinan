@@ -18,6 +18,7 @@ export function bindEvents() {
   el("validationAgendaId").addEventListener("change", selectAgendaFromControl);
   el("documentationAgendaId").addEventListener("change", selectAgendaFromControl);
   el("reportForm").addEventListener("submit", uploadDocumentation);
+  document.addEventListener("click", deleteAgenda);
   window.addEventListener("popstate", () => {
     if (!state.user) {
       showLogin();
@@ -133,6 +134,32 @@ async function refresh({ alertNew = true } = {}) {
   render();
   showNotificationAlerts(notifications, oldIds, alertNew);
   state.seenNotificationIds = new Set(notifications.map((notice) => notice.id));
+}
+
+async function deleteAgenda(event) {
+  const button = event.target.closest("#deleteAgendaBtn");
+  if (!button) return;
+
+  const agendaID = Number(button.dataset.id);
+  const agendaTitle = button.dataset.title || "agenda ini";
+  if (!agendaID) {
+    showToast("Hapus ditolak", "Pilih agenda terlebih dahulu.");
+    return;
+  }
+  if (!window.confirm(`Hapus ${agendaTitle}? Agenda akan hilang dari sistem.`)) {
+    return;
+  }
+
+  try {
+    await api(`/api/agendas/${agendaID}`, { method: "DELETE" });
+    state.selectedId = null;
+    await refresh({ alertNew: false });
+    navigateToView("agenda");
+    render();
+    showToast("Agenda dihapus", "Agenda berhasil dihapus dari sistem.");
+  } catch (error) {
+    showToast("Hapus ditolak", error.message);
+  }
 }
 
 async function createAgenda(event) {

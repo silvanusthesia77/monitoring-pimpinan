@@ -675,7 +675,8 @@ body:not(.app-mode) .page-wrap p {
 }
 
 .button-primary,
-.button-secondary {
+.button-secondary,
+.button-danger {
   min-height: 40px;
   border-radius: 4px;
   padding: 0 14px;
@@ -701,6 +702,17 @@ body:not(.app-mode) .page-wrap p {
 
 .button-secondary:hover {
   background: #f8f9fa;
+}
+
+.button-danger {
+  border: 1px solid #dc3545;
+  background: #dc3545;
+  color: #fff;
+}
+
+.button-danger:hover {
+  border-color: #bb2d3b;
+  background: #bb2d3b;
 }
 
 .choice-group {
