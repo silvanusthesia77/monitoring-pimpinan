@@ -95,6 +95,16 @@ func canUploadDocumentation(endAt time.Time) bool {
 	return !time.Now().Before(endAt)
 }
 
+func canValidateAgenda(status string, startAt time.Time) bool {
+	if !time.Now().Before(startAt) {
+		return false
+	}
+	if status == statusWait {
+		return true
+	}
+	return canRevise(startAt)
+}
+
 func agendaLifecycle(decision string, startAt, endAt time.Time, hasDocumentation bool) (string, string) {
 	now := time.Now()
 	if hasDocumentation {

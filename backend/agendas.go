@@ -328,7 +328,7 @@ func scanAgenda(scanner agendaScanner) (Agenda, error) {
 	agenda.Documentation = nullableFile(docID, docName, docMime, docSize, docCreated)
 	agenda.Phase, agenda.DisplayStatus = agendaLifecycle(agenda.Status, startAt, endAt, agenda.Documentation != nil)
 	agenda.IsLocked = agenda.Phase == phaseLocked
-	agenda.CanValidate = canRevise(startAt) && time.Now().Before(startAt)
+	agenda.CanValidate = canValidateAgenda(agenda.Status, startAt)
 	agenda.CanRevise = agenda.CanValidate
 	agenda.CanPullback = agenda.Status != statusWait && agenda.CanValidate
 	agenda.CanUploadDoc = agenda.Status != statusWait && canUploadDocumentation(endAt) && agenda.Documentation == nil

@@ -139,7 +139,7 @@ function syncSelectOptions(id, agendas, emptyText) {
 }
 
 function validationAgendas() {
-  return state.agendas.filter((agenda) => agenda.can_validate);
+  return state.agendas.filter((agenda) => agenda.status === "menunggu" || agenda.can_validate);
 }
 
 function documentationAgendas() {
@@ -148,20 +148,20 @@ function documentationAgendas() {
 
 function syncActiveSelectionForView() {
   if (state.activeView === "validasi") {
-    ensureSelection(validationAgendas());
+    ensureSelection(validationAgendas(), (agenda) => agenda.can_validate);
   }
   if (state.activeView === "dokumentasi") {
-    ensureSelection(documentationAgendas());
+    ensureSelection(documentationAgendas(), (agenda) => agenda.can_upload_documentation);
   }
 }
 
-function ensureSelection(agendas) {
+function ensureSelection(agendas, preferred = () => true) {
   if (!agendas.length) {
     state.selectedId = null;
     return;
   }
   if (!agendas.some((agenda) => agenda.id === state.selectedId)) {
-    state.selectedId = agendas[0].id;
+    state.selectedId = (agendas.find(preferred) ?? agendas[0]).id;
   }
 }
 
@@ -301,14 +301,25 @@ function statusLabel(status) {
 function updateValidationControls(agenda) {
   const validationSubmit = el("validationSubmit");
   const validationForm = el("validationForm");
+  const validationHint = el("validationHint");
 
   if (!agenda) {
     validationSubmit.disabled = true;
+    validationHint.textContent = "Belum ada agenda yang dapat dipilih untuk validasi.";
     return;
   }
 
   validationSubmit.disabled = !agenda.can_validate;
   validationSubmit.textContent = agenda.status === "menunggu" ? "Validasi" : "Simpan Perubahan";
+  if (agenda.can_validate && agenda.status === "menunggu") {
+    validationHint.textContent = "Agenda belum divalidasi dan masih bisa diproses pimpinan.";
+  } else if (agenda.can_validate) {
+    validationHint.textContent = "Agenda sudah divalidasi, tetapi masih dapat diperbarui sebelum batas 24 jam.";
+  } else if (agenda.status === "menunggu") {
+    validationHint.textContent = "Agenda belum divalidasi, tetapi waktu kegiatan sudah berjalan atau sudah lewat.";
+  } else {
+    validationHint.textContent = "Perubahan validasi ditutup karena kegiatan kurang dari 24 jam atau sudah berjalan.";
+  }
 
   const active = document.activeElement;
   const editingForm = validationForm.contains(active) && active.id !== "validationAgendaId";

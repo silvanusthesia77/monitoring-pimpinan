@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/styles.css?v=20260908-report-flow-fix" />
+    <link rel="stylesheet" href="/styles.css?v=20260908-validation-first" />
   </head>
   <body class="antialiased">
     <main>
@@ -183,6 +183,7 @@
                 <label class="form-label">Pilih agenda
                   <select id="validationAgendaId" class="field"></select>
                 </label>
+                <p id="validationHint" class="action-hint"></p>
                 <div class="choice-group">
                   <label class="choice"><input type="radio" name="status" value="hadir" checked /> Hadir sendiri</label>
                   <label class="choice"><input type="radio" name="status" value="diwakili" /> Diwakili</label>
@@ -256,6 +257,6 @@
         </div>
       </section>
     </main>
-    <script type="module" src="/app.js?v=20260908-report-flow-fix"></script>
+    <script type="module" src="/app.js?v=20260908-validation-first"></script>
   </body>
 </html>
