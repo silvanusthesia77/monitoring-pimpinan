@@ -100,18 +100,27 @@ func (app *App) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := app.db.Exec(
-		"INSERT INTO users (name, email, password_hash, role, position) VALUES (?, ?, ?, ?, ?)",
-		req.Name, req.Email, string(hash), req.Role, req.Position,
-	)
+	existingUser, _, err := app.findUserByEmail(req.Email)
 	if err != nil {
-		writeError(w, http.StatusConflict, "Email sudah terdaftar atau data tidak valid")
+		writeError(w, http.StatusForbidden, "Email belum terdaftar di sistem")
+		return
+	}
+	if existingUser.Role != req.Role {
+		writeError(w, http.StatusUnauthorized, "Role tidak sesuai dengan email terdaftar")
 		return
 	}
 
-	id, _ := result.LastInsertId()
+	_, err = app.db.Exec(
+		"UPDATE users SET name = ?, position = ?, password_hash = ? WHERE id = ?",
+		req.Name, req.Position, string(hash), existingUser.ID,
+	)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Gagal memperbarui akun")
+		return
+	}
+
 	user := User{
-		ID:       id,
+		ID:       existingUser.ID,
 		Name:     req.Name,
 		Email:    req.Email,
 		Role:     req.Role,

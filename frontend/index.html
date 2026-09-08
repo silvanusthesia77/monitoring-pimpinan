@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/styles.css?v=20260909-gmail-leader" />
+    <link rel="stylesheet" href="/styles.css?v=20260909-registered-email-auth" />
   </head>
   <body class="antialiased">
     <main>
@@ -75,7 +75,7 @@
           </label>
           <label class="form-label">Nama lengkap<input id="registerName" class="field" required /></label>
           <label class="form-label">Jabatan<input id="registerPosition" class="field" required /></label>
-          <label class="form-label">Email<input id="registerEmail" class="field" type="email" autocomplete="username" required /></label>
+          <label class="form-label">Email terdaftar<input id="registerEmail" class="field" type="email" autocomplete="username" required /></label>
           <label class="form-label">
             Password
             <span class="password-wrap">
@@ -85,7 +85,8 @@
               </button>
             </span>
           </label>
-          <button class="login-submit" type="submit">Daftar & Masuk</button>
+          <p class="text-xs font-bold text-slate-500">Daftar hanya untuk email yang sudah terdaftar di sistem.</p>
+          <button class="login-submit" type="submit">Buat Password & Masuk</button>
           <p id="registerError" class="hidden rounded-md bg-red-50 p-3 text-sm font-bold text-red-700"></p>
         </form>
       </section>
@@ -258,6 +259,6 @@
         </div>
       </section>
     </main>
-    <script type="module" src="/app.js?v=20260909-gmail-leader"></script>
+    <script type="module" src="/app.js?v=20260909-registered-email-auth"></script>
   </body>
 </html>
