@@ -22,6 +22,7 @@ export function render() {
   renderStats();
   renderAgendaList();
   renderAgendaTable();
+  syncActiveSelectionForView();
   renderFormSelectors();
   renderReports();
   renderActiveView();
@@ -123,17 +124,45 @@ function renderDetail() {
 }
 
 function renderFormSelectors() {
-  syncSelectOptions("validationAgendaId", state.agendas);
-  syncSelectOptions("documentationAgendaId", state.agendas);
+  syncSelectOptions("validationAgendaId", validationAgendas(), "Belum ada agenda yang bisa divalidasi");
+  syncSelectOptions("documentationAgendaId", documentationAgendas(), "Belum ada agenda yang siap dibuat laporan");
 }
 
-function syncSelectOptions(id, agendas) {
+function syncSelectOptions(id, agendas, emptyText) {
   const select = el(id);
-  const selectedValue = String(state.selectedId ?? agendas[0]?.id ?? "");
+  const selectedExists = agendas.some((agenda) => agenda.id === state.selectedId);
+  const selectedValue = String(selectedExists ? state.selectedId : agendas[0]?.id ?? "");
   select.innerHTML = agendas.length
     ? agendas.map((agenda) => `<option value="${agenda.id}">${escapeHtml(agenda.title)} - ${escapeHtml(agenda.display_status || statusLabel(agenda))}</option>`).join("")
-    : `<option value="">Belum ada agenda</option>`;
+    : `<option value="">${emptyText}</option>`;
   select.value = selectedValue;
+}
+
+function validationAgendas() {
+  return state.agendas.filter((agenda) => agenda.can_validate);
+}
+
+function documentationAgendas() {
+  return state.agendas.filter((agenda) => agenda.can_upload_documentation || agenda.documentation);
+}
+
+function syncActiveSelectionForView() {
+  if (state.activeView === "validasi") {
+    ensureSelection(validationAgendas());
+  }
+  if (state.activeView === "dokumentasi") {
+    ensureSelection(documentationAgendas());
+  }
+}
+
+function ensureSelection(agendas) {
+  if (!agendas.length) {
+    state.selectedId = null;
+    return;
+  }
+  if (!agendas.some((agenda) => agenda.id === state.selectedId)) {
+    state.selectedId = agendas[0].id;
+  }
 }
 
 function renderAgendaTable() {
@@ -335,7 +364,7 @@ function navItems() {
       { id: "input", label: "Input Jadwal", icon: "plus" },
       common[1],
       common[2],
-      { id: "dokumentasi", label: "Dokumentasi", icon: "upload" },
+      { id: "dokumentasi", label: "Buat Laporan", icon: "upload" },
       common[3],
       common[4],
     ];

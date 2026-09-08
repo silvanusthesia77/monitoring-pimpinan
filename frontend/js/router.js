@@ -8,6 +8,7 @@ const routes = {
   "/agenda": "agenda",
   "/detail": "detail",
   "/dokumentasi": "dokumentasi",
+  "/buat-laporan": "dokumentasi",
   "/laporan": "laporan",
   "/notifikasi": "notifikasi",
 };
