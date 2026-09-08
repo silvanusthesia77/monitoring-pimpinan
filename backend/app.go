@@ -39,6 +39,9 @@ func newApp() (*App, error) {
 	if err := seedUsers(db); err != nil {
 		return nil, err
 	}
+	if err := seedDemoAgendas(db); err != nil {
+		return nil, err
+	}
 
 	uploadDir := env("UPLOAD_DIR", defaultUploadDir)
 	if err := os.MkdirAll(uploadDir, 0755); err != nil {
@@ -127,6 +130,88 @@ func seedUsers(db *sql.DB) error {
 			user.Name, user.Email, string(hash), user.Role, user.Position,
 		)
 		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func seedDemoAgendas(db *sql.DB) error {
+	var staffID, leaderID int64
+	if err := db.QueryRow("SELECT id FROM users WHERE email = ?", "staf@sorsel.go.id").Scan(&staffID); err != nil {
+		return err
+	}
+	if err := db.QueryRow("SELECT id FROM users WHERE email = ?", "pimpinan@sorsel.go.id").Scan(&leaderID); err != nil {
+		return err
+	}
+
+	demos := []struct {
+		title      string
+		location   string
+		organizer  string
+		staffNote  string
+		status     string
+		delegate   string
+		leaderNote string
+		startSQL   string
+		endSQL     string
+	}{
+		{
+			title:     "Demo Agenda - Menunggu Validasi",
+			location:  "Aula Kantor Bupati Sorong Selatan",
+			organizer: "Bagian Protokol",
+			staffNote: "Agenda contoh untuk validasi pimpinan.",
+			status:    statusWait,
+			startSQL:  "DATE_ADD(NOW(), INTERVAL 7 DAY)",
+			endSQL:    "DATE_ADD(NOW(), INTERVAL 7 DAY) + INTERVAL 2 HOUR",
+		},
+		{
+			title:      "Demo Agenda - Diwakili",
+			location:   "Ruang Rapat Sekretariat Daerah",
+			organizer:  "Sekretariat Daerah",
+			staffNote:  "Agenda contoh yang sudah divalidasi.",
+			status:     statusDelegate,
+			delegate:   "Sekretaris Daerah",
+			leaderNote: "Pimpinan diwakili oleh Sekretaris Daerah.",
+			startSQL:   "DATE_ADD(NOW(), INTERVAL 9 DAY)",
+			endSQL:     "DATE_ADD(NOW(), INTERVAL 9 DAY) + INTERVAL 2 HOUR",
+		},
+		{
+			title:      "Demo Agenda - Hadir Sendiri",
+			location:   "Gedung Serbaguna Teminabuan",
+			organizer:  "Panitia Kegiatan Daerah",
+			staffNote:  "Agenda contoh pimpinan hadir sendiri.",
+			status:     statusAttend,
+			leaderNote: "Pimpinan hadir langsung pada kegiatan.",
+			startSQL:   "DATE_ADD(NOW(), INTERVAL 12 DAY)",
+			endSQL:     "DATE_ADD(NOW(), INTERVAL 12 DAY) + INTERVAL 2 HOUR",
+		},
+		{
+			title:      "Demo Agenda - Siap Upload Laporan",
+			location:   "Aula Distrik Teminabuan",
+			organizer:  "Bagian Pemerintahan",
+			staffNote:  "Agenda contoh yang sudah selesai dan siap diupload dokumentasi.",
+			status:     statusAttend,
+			leaderNote: "Kegiatan sudah divalidasi dan menunggu dokumentasi.",
+			startSQL:   "DATE_SUB(NOW(), INTERVAL 2 DAY)",
+			endSQL:     "DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 2 HOUR",
+		},
+	}
+
+	for _, demo := range demos {
+		validatedBy := sql.NullInt64{}
+		validatedAt := "NULL"
+		if demo.status != statusWait {
+			validatedBy = sql.NullInt64{Int64: leaderID, Valid: true}
+			validatedAt = "NOW()"
+		}
+
+		query := `
+			INSERT INTO agendas
+				(title, location, start_at, end_at, organizer, staff_note, status, delegate, leader_note, validated_by, validated_at, created_by)
+			SELECT ?, ?, ` + demo.startSQL + `, ` + demo.endSQL + `, ?, ?, ?, NULLIF(?, ''), NULLIF(?, ''), ?, ` + validatedAt + `, ?
+			WHERE NOT EXISTS (SELECT 1 FROM agendas WHERE title = ?)`
+		if _, err := db.Exec(query, demo.title, demo.location, demo.organizer, demo.staffNote, demo.status, demo.delegate, demo.leaderNote, validatedBy, staffID, demo.title); err != nil {
 			return err
 		}
 	}

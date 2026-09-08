@@ -105,6 +105,7 @@ function renderDetail() {
     status.className = "badge";
     body.innerHTML = "";
     downloads.innerHTML = "";
+    updateActionControls(null);
     return;
   }
 
@@ -224,10 +225,25 @@ function updateActionControls(agenda) {
   const pullbackBtn = el("pullbackBtn");
   const reportSubmit = el("reportSubmit");
   const reportHint = el("reportHint");
+  const reportAgendaBox = el("reportAgendaBox");
+
+  if (!agenda) {
+    validationSubmit.disabled = true;
+    pullbackBtn.disabled = true;
+    reportSubmit.disabled = true;
+    reportAgendaBox.innerHTML = `<span>Agenda aktif</span><strong>Belum ada agenda dipilih</strong>`;
+    reportHint.textContent = "Pilih agenda terlebih dahulu dari menu Agenda atau Daftar Terdekat.";
+    return;
+  }
 
   validationSubmit.disabled = !agenda.can_validate;
   pullbackBtn.disabled = !agenda.can_pullback;
   reportSubmit.disabled = !agenda.can_upload_documentation;
+  reportAgendaBox.innerHTML = `
+    <span>Agenda aktif</span>
+    <strong>${escapeHtml(agenda.title)}</strong>
+    <small>${escapeHtml(agenda.display_status || statusLabel(agenda))} - ${formatDate(agenda.end_at)}</small>
+  `;
 
   if (agenda.can_upload_documentation) {
     reportHint.textContent = "Kegiatan sudah selesai. Dokumentasi dan catatan laporan bisa diupload.";

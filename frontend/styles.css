@@ -918,6 +918,33 @@ dd {
   font-weight: 700;
 }
 
+.report-agenda-box {
+  display: grid;
+  gap: 4px;
+  margin-top: 12px;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  background: #f8f9fa;
+  padding: 10px 12px;
+}
+
+.report-agenda-box span {
+  color: #667085;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.report-agenda-box strong {
+  color: #212529;
+  font-size: 0.95rem;
+}
+
+.report-agenda-box small {
+  color: #667085;
+  font-weight: 700;
+}
+
 .agenda-table {
   display: grid;
   gap: 8px;
