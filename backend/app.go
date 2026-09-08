@@ -20,6 +20,9 @@ const (
 	defaultFrontendDir = "../frontend"
 	defaultSchemaFile  = "../database/schema.sql"
 	defaultPassword    = "agenda123"
+	defaultStaffEmail  = "staf@sorsel.go.id"
+	defaultLeaderEmail = "sergiodyego45@gmail.com"
+	legacyLeaderEmail  = "pimpinan@sorsel.go.id"
 )
 
 func newApp() (*App, error) {
@@ -37,6 +40,9 @@ func newApp() (*App, error) {
 		return nil, err
 	}
 	if err := seedUsers(db); err != nil {
+		return nil, err
+	}
+	if err := migrateDefaultLeaderEmail(db); err != nil {
 		return nil, err
 	}
 	if err := seedDemoAgendas(db); err != nil {
@@ -117,8 +123,8 @@ func seedUsers(db *sql.DB) error {
 	}
 
 	users := []User{
-		{Name: "Admin Staf", Email: "staf@sorsel.go.id", Role: roleStaff, Position: "Staf Protokol"},
-		{Name: "Pimpinan Daerah", Email: "pimpinan@sorsel.go.id", Role: roleLeader, Position: "Pimpinan Kabupaten Sorong Selatan"},
+		{Name: "Admin Staf", Email: defaultStaffEmail, Role: roleStaff, Position: "Staf Protokol"},
+		{Name: "Pimpinan Daerah", Email: defaultLeaderEmail, Role: roleLeader, Position: "Pimpinan Kabupaten Sorong Selatan"},
 	}
 	for _, user := range users {
 		hash, err := bcrypt.GenerateFromPassword([]byte(defaultPassword), bcrypt.DefaultCost)
@@ -136,12 +142,29 @@ func seedUsers(db *sql.DB) error {
 	return nil
 }
 
-func seedDemoAgendas(db *sql.DB) error {
-	var staffID, leaderID int64
-	if err := db.QueryRow("SELECT id FROM users WHERE email = ?", "staf@sorsel.go.id").Scan(&staffID); err != nil {
+func migrateDefaultLeaderEmail(db *sql.DB) error {
+	var existingID int64
+	err := db.QueryRow("SELECT id FROM users WHERE email = ?", defaultLeaderEmail).Scan(&existingID)
+	if err == nil {
+		return nil
+	}
+	if err != sql.ErrNoRows {
 		return err
 	}
-	if err := db.QueryRow("SELECT id FROM users WHERE email = ?", "pimpinan@sorsel.go.id").Scan(&leaderID); err != nil {
+
+	_, err = db.Exec(
+		"UPDATE users SET email = ? WHERE email = ? AND role = ?",
+		defaultLeaderEmail, legacyLeaderEmail, roleLeader,
+	)
+	return err
+}
+
+func seedDemoAgendas(db *sql.DB) error {
+	var staffID, leaderID int64
+	if err := db.QueryRow("SELECT id FROM users WHERE email = ?", defaultStaffEmail).Scan(&staffID); err != nil {
+		return err
+	}
+	if err := db.QueryRow("SELECT id FROM users WHERE email = ?", defaultLeaderEmail).Scan(&leaderID); err != nil {
 		return err
 	}
 

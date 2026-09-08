@@ -37,7 +37,7 @@ func (mailer Mailer) Send(to []string, subject, body string) (bool, error) {
 
 	if !mailer.Enabled() {
 		log.Printf("[EMAIL SIMULASI] to=%s subject=%s body=%s", strings.Join(to, ","), subject, body)
-		return true, nil
+		return false, nil
 	}
 
 	port, err := strconv.Atoi(mailer.Port)

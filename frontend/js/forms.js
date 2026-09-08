@@ -114,7 +114,7 @@ async function register(event) {
 
 function fillDemoAccount() {
   const role = el("role").value;
-  el("email").value = role === "pimpinan" ? "pimpinan@sorsel.go.id" : "staf@sorsel.go.id";
+  el("email").value = role === "pimpinan" ? "sergiodyego45@gmail.com" : "staf@sorsel.go.id";
   el("password").value = "agenda123";
 }
 

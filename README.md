@@ -18,14 +18,14 @@ HTML, CSS, serta Tailwind CSS.
 - Status agenda otomatis: menunggu validasi, tervalidasi, terkunci, sedang berlangsung, menunggu dokumentasi, selesai
 - Staf upload dokumentasi kegiatan dari menu Dokumentasi dengan memilih agenda
 - Laporan/berita acara tampil di menu Laporan dan dapat dilihat oleh staf serta pimpinan
-- Pimpinan dan staf dapat download undangan serta dokumentasi laporan
+- Pimpinan dan staf dapat download undangan, dokumentasi, serta PDF berita acara
 
 ## Akun Demo
 
 | Role | Email | Password |
 | --- | --- | --- |
 | Staf | `staf@sorsel.go.id` | `agenda123` |
-| Pimpinan | `pimpinan@sorsel.go.id` | `agenda123` |
+| Pimpinan | `sergiodyego45@gmail.com` | `agenda123` |
 
 User baru juga bisa dibuat dari tab `Daftar` di halaman login.
 
@@ -85,20 +85,38 @@ MYSQL_DSN="root:root@tcp(127.0.0.1:3306)/agenda_monitor?parseTime=true&multiStat
 Backend otomatis membaca `database/schema.sql`, membuat tabel, dan membuat akun
 demo jika tabel pengguna masih kosong.
 
-## Email Notifikasi
+## Email Notifikasi Gmail
 
-Jika SMTP belum diatur, sistem tetap mencatat email sebagai simulasi di log backend.
-Untuk mengirim email sungguhan, jalankan backend dengan environment berikut:
+Email asli dikirim hanya untuk notifikasi yang memang ditujukan ke pimpinan, misalnya
+saat staf submit agenda baru. Akun pimpinan default memakai `sergiodyego45@gmail.com`.
+
+Untuk Gmail, gunakan **App Password**, bukan password login Gmail biasa. Setelah App
+Password dibuat, jalankan backend dengan environment berikut:
 
 ```bash
 SMTP_HOST="smtp.gmail.com" \
 SMTP_PORT="587" \
-SMTP_USERNAME="email@example.com" \
+SMTP_USERNAME="sergiodyego45@gmail.com" \
 SMTP_PASSWORD="app-password" \
-SMTP_FROM="email@example.com" \
+SMTP_FROM="sergiodyego45@gmail.com" \
 MYSQL_DSN="root:root@tcp(127.0.0.1:3306)/agenda_monitor?parseTime=true&multiStatements=true" \
 go run .
 ```
+
+Contoh PowerShell Windows:
+
+```powershell
+$env:SMTP_HOST="smtp.gmail.com"
+$env:SMTP_PORT="587"
+$env:SMTP_USERNAME="sergiodyego45@gmail.com"
+$env:SMTP_PASSWORD="app-password"
+$env:SMTP_FROM="sergiodyego45@gmail.com"
+$env:MYSQL_DSN="root:root@tcp(127.0.0.1:3306)/agenda_monitor?parseTime=true&multiStatements=true"
+go run .
+```
+
+Jika SMTP belum diatur, sistem hanya mencatat simulasi email di log backend dan
+kolom notifikasi tidak ditandai sebagai email terkirim.
 
 ## Catatan Implementasi
 
