@@ -82,7 +82,7 @@ async function login(event) {
       headers: { "Content-Type": "application/json" },
     });
     await refresh({ alertNew: false });
-    navigateToView("dashboard");
+    navigateToView(defaultView());
     showApp();
     startNotificationPolling();
   } catch (error) {
@@ -114,7 +114,7 @@ async function register(event) {
     });
     event.target.reset();
     await refresh({ alertNew: false });
-    navigateToView("dashboard");
+    navigateToView(defaultView());
     showApp();
     startNotificationPolling();
   } catch (error) {
@@ -145,10 +145,18 @@ async function logout() {
 }
 
 async function refresh({ alertNew = true } = {}) {
+  if (state.user?.role === "admin") {
+    const users = await api("/api/users");
+    setDashboardData([], []);
+    setUsers(users);
+    render();
+    return;
+  }
+
   const [agendas, notifications, users] = await Promise.all([
     api("/api/agendas"),
     api("/api/notifications"),
-    state.user?.role === "admin" ? api("/api/users") : Promise.resolve([]),
+    Promise.resolve([]),
   ]);
   const oldIds = new Set(state.seenNotificationIds);
   setDashboardData(agendas, notifications);
@@ -156,6 +164,10 @@ async function refresh({ alertNew = true } = {}) {
   render();
   showNotificationAlerts(notifications, oldIds, alertNew);
   state.seenNotificationIds = new Set(notifications.map((notice) => notice.id));
+}
+
+function defaultView() {
+  return "dashboard";
 }
 
 async function deleteUser(event) {

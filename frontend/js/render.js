@@ -81,6 +81,7 @@ function renderNavigation() {
 }
 
 function renderActiveView() {
+  const isAdmin = state.user.role === "admin";
   const isStaff = state.user.role === "staf";
   const isLeader = state.user.role === "pimpinan";
   const allowedViews = navItems().map((item) => item.id);
@@ -88,15 +89,16 @@ function renderActiveView() {
     navigateToView("dashboard");
   }
 
+  el("agendaSidebarCard").classList.toggle("hidden", isAdmin);
   toggleView("dashboardPanel", state.activeView === "dashboard");
-  toggleView("userPanel", state.user.role === "admin" && state.activeView === "users");
-  toggleView("agendaPanel", state.activeView === "agenda");
-  toggleView("detailPanel", state.activeView === "detail");
+  toggleView("userPanel", isAdmin && state.activeView === "users");
+  toggleView("agendaPanel", !isAdmin && state.activeView === "agenda");
+  toggleView("detailPanel", !isAdmin && state.activeView === "detail");
   toggleView("staffPanel", isStaff && state.activeView === "input");
   toggleView("leaderPanel", isLeader && state.activeView === "validasi");
   toggleView("documentationPanel", isStaff && state.activeView === "dokumentasi");
-  toggleView("reportsPanel", state.activeView === "laporan");
-  toggleView("notificationPanel", state.activeView === "notifikasi");
+  toggleView("reportsPanel", !isAdmin && state.activeView === "laporan");
+  toggleView("notificationPanel", !isAdmin && state.activeView === "notifikasi");
 }
 
 function renderDetail() {
@@ -429,10 +431,6 @@ function navItems() {
     return [
       common[0],
       { id: "users", label: "Kelola User", icon: "users", count: state.users.length },
-      common[1],
-      common[2],
-      common[3],
-      common[4],
     ];
   }
 
