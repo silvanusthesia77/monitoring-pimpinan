@@ -139,11 +139,11 @@ function syncSelectOptions(id, agendas, emptyText) {
 }
 
 function validationAgendas() {
-  return state.agendas.filter((agenda) => agenda.status === "menunggu" || agenda.can_validate);
+  return state.agendas;
 }
 
 function documentationAgendas() {
-  return state.agendas.filter((agenda) => agenda.can_upload_documentation || agenda.documentation);
+  return state.agendas.filter((agenda) => agenda.status !== "menunggu" || agenda.documentation);
 }
 
 function syncActiveSelectionForView() {
@@ -305,20 +305,23 @@ function statusLabel(status) {
 
 function updateValidationControls(agenda) {
   const validationSubmit = el("validationSubmit");
+  const pullbackSubmit = el("pullbackSubmit");
   const validationForm = el("validationForm");
   const validationHint = el("validationHint");
 
   validationSubmit.removeAttribute("disabled");
+  pullbackSubmit.classList.add("hidden");
   if (!agenda) {
     validationHint.textContent = "Belum ada agenda yang dapat dipilih untuk validasi.";
     return;
   }
 
   validationSubmit.textContent = agenda.status === "menunggu" ? "Validasi" : "Simpan Perubahan";
+  pullbackSubmit.classList.toggle("hidden", agenda.status === "menunggu");
   if (agenda.can_validate && agenda.status === "menunggu") {
     validationHint.textContent = "Agenda belum divalidasi dan masih bisa diproses pimpinan.";
   } else if (agenda.can_validate) {
-    validationHint.textContent = "Agenda sudah divalidasi, tetapi masih dapat diperbarui sebelum batas 24 jam.";
+    validationHint.textContent = "Agenda sudah divalidasi. Pimpinan bisa tarik validasi untuk mengganti pesan selama belum terkunci 24 jam.";
   } else if (agenda.status === "menunggu") {
     validationHint.textContent = "Agenda belum divalidasi, tetapi waktu kegiatan sudah berjalan atau sudah lewat.";
   } else {
@@ -353,7 +356,7 @@ function updateDocumentationControls(agenda) {
   `;
 
   if (agenda.can_upload_documentation) {
-    reportHint.textContent = "Kegiatan sudah selesai. Dokumentasi dan catatan laporan bisa diupload.";
+    reportHint.textContent = "Agenda sudah divalidasi. Dokumentasi dan ringkasan laporan bisa diupload.";
   } else if (agenda.status === "menunggu") {
     reportHint.textContent = "Agenda harus divalidasi pimpinan sebelum laporan kegiatan diupload.";
   } else if (agenda.documentation) {

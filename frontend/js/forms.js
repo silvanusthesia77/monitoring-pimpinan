@@ -15,6 +15,7 @@ export function bindEvents() {
   el("toggleRegisterPassword").addEventListener("click", () => togglePasswordField("registerPassword", "toggleRegisterPassword"));
   el("agendaForm").addEventListener("submit", createAgenda);
   el("validationForm").addEventListener("submit", validateAgenda);
+  el("pullbackSubmit").addEventListener("click", pullBackValidation);
   el("validationAgendaId").addEventListener("change", selectAgendaFromControl);
   el("documentationAgendaId").addEventListener("change", selectAgendaFromControl);
   el("reportForm").addEventListener("submit", uploadDocumentation);
@@ -239,6 +240,29 @@ async function validateAgenda(event) {
   }
 }
 
+async function pullBackValidation() {
+  const agenda = selectedAgendaByControl("validationAgendaId");
+  if (!agenda) {
+    showToast("Tarik validasi ditolak", "Pilih agenda terlebih dahulu.");
+    return;
+  }
+  if (agenda.status === "menunggu") {
+    showToast("Tarik validasi ditolak", "Agenda ini belum divalidasi.");
+    return;
+  }
+  if (!window.confirm(`Tarik validasi ${agenda.title}? Setelah ditarik, keterangan bisa diganti lalu divalidasi ulang.`)) {
+    return;
+  }
+
+  try {
+    await api(`/api/agendas/${agenda.id}/pullback`, { method: "POST" });
+    await refresh({ alertNew: false });
+    showToast("Validasi ditarik", "Silakan isi ulang keputusan dan keterangan pimpinan, lalu validasi kembali.");
+  } catch (error) {
+    showToast("Tarik validasi ditolak", error.message);
+  }
+}
+
 async function uploadDocumentation(event) {
   event.preventDefault();
   const agenda = selectedAgendaByControl("documentationAgendaId");
@@ -271,7 +295,7 @@ function documentationErrorMessage(agenda) {
   if (agenda.documentation) {
     return "Laporan untuk agenda ini sudah tersimpan dan bisa dilihat di menu Laporan.";
   }
-  return "Laporan baru bisa dibuat setelah waktu selesai kegiatan.";
+  return "Agenda sudah divalidasi. Lengkapi dokumentasi dan ringkasan laporan.";
 }
 
 function selectAgendaFromControl(event) {

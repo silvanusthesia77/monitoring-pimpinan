@@ -295,15 +295,20 @@ func (app *App) uploadDocumentation(w http.ResponseWriter, r *http.Request, id i
 		return
 	}
 	if !agendaBefore.CanUploadDoc {
-		writeError(w, http.StatusConflict, "Dokumentasi hanya bisa diupload setelah kegiatan selesai dan sebelum laporan tersimpan")
+		writeError(w, http.StatusConflict, "Dokumentasi hanya bisa diupload setelah agenda divalidasi dan sebelum laporan tersimpan")
 		return
 	}
 
 	fh, ok := firstUploadedFile(r, "documentation")
-	if !ok {
+	if !ok || fh.Size == 0 {
 		badRequest(w, "File dokumentasi wajib diunggah")
 		return
 	}
+	values, ok := requiredFormValues(w, r, "report_note")
+	if !ok {
+		return
+	}
+	reportNote := values[0]
 
 	fileID, err := app.saveUpload(fh, user.ID)
 	if err != nil {
@@ -313,7 +318,7 @@ func (app *App) uploadDocumentation(w http.ResponseWriter, r *http.Request, id i
 
 	_, err = app.db.Exec(
 		"UPDATE agendas SET documentation_file_id = ?, report_note = ? WHERE id = ?",
-		fileID, r.FormValue("report_note"), id,
+		fileID, reportNote, id,
 	)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "Gagal menyimpan laporan")
@@ -369,7 +374,7 @@ func scanAgenda(scanner agendaScanner) (Agenda, error) {
 	agenda.CanValidate = canValidateAgenda(agenda.Status, startAt)
 	agenda.CanRevise = agenda.CanValidate
 	agenda.CanPullback = agenda.Status != statusWait && agenda.CanValidate
-	agenda.CanUploadDoc = agenda.Status != statusWait && canUploadDocumentation(endAt) && agenda.Documentation == nil
+	agenda.CanUploadDoc = agenda.Status != statusWait && agenda.Documentation == nil
 	return agenda, nil
 }
 

@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/styles.css?v=20260909-delete-agenda-error" />
+    <link rel="stylesheet" href="/styles.css?v=20260909-pullback-report" />
   </head>
   <body class="antialiased">
     <main>
@@ -200,6 +200,7 @@
                 <label class="form-label">Keterangan pimpinan<textarea name="leader_note" class="field min-h-28"></textarea></label>
                 <div class="flex flex-wrap gap-3">
                   <button id="validationSubmit" class="button-primary" type="submit">Validasi</button>
+                  <button id="pullbackSubmit" class="button-secondary hidden" type="button">Tarik Validasi</button>
                 </div>
               </form>
             </section>
@@ -237,7 +238,7 @@
               <p id="documentationHint" class="action-hint"></p>
               <form id="reportForm" class="mt-4 grid gap-3">
                 <label class="form-label">File dokumentasi<input name="documentation" class="field file-field" type="file" required /></label>
-                <label class="form-label">Ringkasan laporan<textarea name="report_note" class="field min-h-24"></textarea></label>
+                <label class="form-label">Ringkasan laporan<textarea name="report_note" class="field min-h-24" required></textarea></label>
                 <button id="reportSubmit" class="button-primary" type="submit">Simpan Laporan</button>
               </form>
             </section>
@@ -257,6 +258,6 @@
         </div>
       </section>
     </main>
-    <script type="module" src="/app.js?v=20260909-delete-agenda-error"></script>
+    <script type="module" src="/app.js?v=20260909-pullback-report"></script>
   </body>
 </html>
