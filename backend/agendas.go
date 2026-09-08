@@ -196,7 +196,11 @@ func (app *App) validateAgenda(w http.ResponseWriter, r *http.Request, id int64,
 		http.NotFound(w, r)
 		return
 	}
-	app.notifyRole(roleStaff, "Agenda telah divalidasi pimpinan", validationMessage(agenda), false)
+	if agendaBefore.Status == statusWait {
+		app.notifyRole(roleStaff, "Agenda telah divalidasi pimpinan", validationMessage(agenda), false)
+	} else {
+		app.notifyRole(roleStaff, "Update Validasi Agenda", validationMessage(agenda)+" Keterangan pimpinan diperbarui.", false)
+	}
 	writeJSON(w, http.StatusOK, agenda)
 }
 

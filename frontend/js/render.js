@@ -22,6 +22,8 @@ export function render() {
   renderStats();
   renderAgendaList();
   renderAgendaTable();
+  renderFormSelectors();
+  renderReports();
   renderActiveView();
   renderDetail();
   renderNotifications();
@@ -88,7 +90,8 @@ function renderActiveView() {
   toggleView("detailPanel", state.activeView === "detail");
   toggleView("staffPanel", isStaff && state.activeView === "input");
   toggleView("leaderPanel", !isStaff && state.activeView === "validasi");
-  toggleView("reportPanel", isStaff && state.activeView === "laporan");
+  toggleView("documentationPanel", isStaff && state.activeView === "dokumentasi");
+  toggleView("reportsPanel", state.activeView === "laporan");
   toggleView("notificationPanel", state.activeView === "notifikasi");
 }
 
@@ -105,7 +108,8 @@ function renderDetail() {
     status.className = "badge";
     body.innerHTML = "";
     downloads.innerHTML = "";
-    updateActionControls(null);
+    updateValidationControls(null);
+    updateDocumentationControls(null);
     return;
   }
 
@@ -114,7 +118,22 @@ function renderDetail() {
   status.className = `badge ${agenda.phase || agenda.status}`;
   body.innerHTML = agendaDetails(agenda);
   downloads.innerHTML = agendaDownloads(agenda);
-  updateActionControls(agenda);
+  updateValidationControls(agenda);
+  updateDocumentationControls(agenda);
+}
+
+function renderFormSelectors() {
+  syncSelectOptions("validationAgendaId", state.agendas);
+  syncSelectOptions("documentationAgendaId", state.agendas);
+}
+
+function syncSelectOptions(id, agendas) {
+  const select = el(id);
+  const selectedValue = String(state.selectedId ?? agendas[0]?.id ?? "");
+  select.innerHTML = agendas.length
+    ? agendas.map((agenda) => `<option value="${agenda.id}">${escapeHtml(agenda.title)} - ${escapeHtml(agenda.display_status || statusLabel(agenda))}</option>`).join("")
+    : `<option value="">Belum ada agenda</option>`;
+  select.value = selectedValue;
 }
 
 function renderAgendaTable() {
@@ -177,7 +196,7 @@ function agendaDetails(agenda) {
     detailRow(
       "Aturan perubahan",
       agenda.can_revise
-        ? "Validasi masih dapat ditarik kembali."
+        ? "Validasi masih dapat diperbarui."
         : "Perubahan ditutup karena kegiatan kurang dari 24 jam atau sudah berjalan.",
     ),
   ].join("");
@@ -188,6 +207,36 @@ function agendaDownloads(agenda) {
     agenda.invitation ? downloadLink("Download undangan", agenda.invitation) : muted("Undangan belum diunggah"),
     agenda.documentation ? downloadLink("Download dokumentasi", agenda.documentation) : muted("Dokumentasi belum tersedia"),
   ].join("");
+}
+
+function renderReports() {
+  const reports = state.agendas.filter((agenda) => agenda.documentation);
+  el("reportsList").innerHTML = reports.length
+    ? reports.map(reportCard).join("")
+    : `<p class="empty-text">Belum ada laporan kegiatan. Laporan muncul setelah staf mengupload dokumentasi.</p>`;
+}
+
+function reportCard(agenda) {
+  const attendance = agenda.status === "diwakili" ? `Diwakili oleh ${agenda.delegate}` : "Pimpinan hadir sendiri";
+  return `
+    <article class="report-card">
+      <div class="report-card-header">
+        <span>Berita Acara</span>
+        <strong>${escapeHtml(agenda.title)}</strong>
+        <small>${formatDate(agenda.start_at)} sampai ${formatDate(agenda.end_at)}</small>
+      </div>
+      <dl class="report-details">
+        ${detailRow("Lokasi", agenda.location)}
+        ${detailRow("Penyelenggara", agenda.organizer)}
+        ${detailRow("Kehadiran", attendance)}
+        ${detailRow("Keterangan pimpinan", agenda.leader_note || "Tidak ada keterangan.")}
+        ${detailRow("Ringkasan laporan", agenda.report_note || "Tidak ada ringkasan laporan.")}
+      </dl>
+      <div class="report-actions">
+        ${downloadLink("Download dokumentasi", agenda.documentation)}
+      </div>
+    </article>
+  `;
 }
 
 function notificationItem(notice) {
@@ -220,24 +269,39 @@ function statusLabel(status) {
   return "Menunggu Validasi";
 }
 
-function updateActionControls(agenda) {
+function updateValidationControls(agenda) {
   const validationSubmit = el("validationSubmit");
-  const pullbackBtn = el("pullbackBtn");
-  const reportSubmit = el("reportSubmit");
-  const reportHint = el("reportHint");
-  const reportAgendaBox = el("reportAgendaBox");
+  const validationForm = el("validationForm");
 
   if (!agenda) {
     validationSubmit.disabled = true;
-    pullbackBtn.disabled = true;
-    reportSubmit.disabled = true;
-    reportAgendaBox.innerHTML = `<span>Agenda aktif</span><strong>Belum ada agenda dipilih</strong>`;
-    reportHint.textContent = "Pilih agenda terlebih dahulu dari menu Agenda atau Daftar Terdekat.";
     return;
   }
 
   validationSubmit.disabled = !agenda.can_validate;
-  pullbackBtn.disabled = !agenda.can_pullback;
+  validationSubmit.textContent = agenda.status === "menunggu" ? "Validasi" : "Simpan Perubahan";
+
+  const active = document.activeElement;
+  const editingForm = validationForm.contains(active) && active.id !== "validationAgendaId";
+  if (!editingForm) {
+    validationForm.elements.status.value = agenda.status === "diwakili" ? "diwakili" : "hadir";
+    validationForm.elements.delegate.value = agenda.delegate || "Sekretaris Daerah";
+    validationForm.elements.leader_note.value = agenda.leader_note || "";
+  }
+}
+
+function updateDocumentationControls(agenda) {
+  const reportSubmit = el("reportSubmit");
+  const reportHint = el("documentationHint");
+  const reportAgendaBox = el("documentationAgendaBox");
+
+  if (!agenda) {
+    reportSubmit.disabled = true;
+    reportAgendaBox.innerHTML = `<span>Agenda aktif</span><strong>Belum ada agenda dipilih</strong>`;
+    reportHint.textContent = "Pilih agenda terlebih dahulu dari dropdown.";
+    return;
+  }
+
   reportSubmit.disabled = !agenda.can_upload_documentation;
   reportAgendaBox.innerHTML = `
     <span>Agenda aktif</span>
@@ -261,6 +325,7 @@ function navItems() {
     { id: "dashboard", label: "Dashboard", icon: "dashboard" },
     { id: "agenda", label: "Agenda", icon: "calendar", count: state.agendas.length },
     { id: "detail", label: "Detail Agenda", icon: "file" },
+    { id: "laporan", label: "Laporan", icon: "file", count: state.agendas.filter((agenda) => agenda.documentation).length },
     { id: "notifikasi", label: "Notifikasi", icon: "bell", count: state.notifications.length },
   ];
 
@@ -270,8 +335,9 @@ function navItems() {
       { id: "input", label: "Input Jadwal", icon: "plus" },
       common[1],
       common[2],
-      { id: "laporan", label: "Laporan", icon: "upload" },
+      { id: "dokumentasi", label: "Dokumentasi", icon: "upload" },
       common[3],
+      common[4],
     ];
   }
 
@@ -281,6 +347,7 @@ function navItems() {
     common[1],
     common[2],
     common[3],
+    common[4],
   ];
 }
 

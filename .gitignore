@@ -16,3 +16,4 @@ dist/
 .next/
 .vinext/
 .wrangler/
+backend/uploads/

@@ -15,7 +15,8 @@ export function bindEvents() {
   el("toggleRegisterPassword").addEventListener("click", () => togglePasswordField("registerPassword", "toggleRegisterPassword"));
   el("agendaForm").addEventListener("submit", createAgenda);
   el("validationForm").addEventListener("submit", validateAgenda);
-  el("pullbackBtn").addEventListener("click", pullBackAgenda);
+  el("validationAgendaId").addEventListener("change", selectAgendaFromControl);
+  el("documentationAgendaId").addEventListener("change", selectAgendaFromControl);
   el("reportForm").addEventListener("submit", uploadDocumentation);
   window.addEventListener("popstate", () => {
     if (!state.user) {
@@ -149,7 +150,7 @@ async function createAgenda(event) {
 
 async function validateAgenda(event) {
   event.preventDefault();
-  const agenda = selectedAgenda();
+  const agenda = selectedAgendaByControl("validationAgendaId");
   if (!agenda) return;
 
   const form = new FormData(event.target);
@@ -164,28 +165,15 @@ async function validateAgenda(event) {
       }),
     });
     await refresh({ alertNew: false });
-    showToast("Agenda divalidasi", "Keputusan pimpinan sudah disimpan.");
+    showToast("Validasi tersimpan", "Keputusan dan keterangan pimpinan sudah disimpan.");
   } catch (error) {
     showToast("Validasi ditolak", error.message);
   }
 }
 
-async function pullBackAgenda() {
-  const agenda = selectedAgenda();
-  if (!agenda) return;
-
-  try {
-    await api(`/api/agendas/${agenda.id}/pullback`, { method: "POST" });
-    await refresh({ alertNew: false });
-    showToast("Validasi ditarik", "Agenda kembali ke status menunggu validasi.");
-  } catch (error) {
-    showToast("Tidak bisa ditarik", error.message);
-  }
-}
-
 async function uploadDocumentation(event) {
   event.preventDefault();
-  const agenda = selectedAgenda();
+  const agenda = selectedAgendaByControl("documentationAgendaId");
   if (!agenda) return;
 
   try {
@@ -199,6 +187,18 @@ async function uploadDocumentation(event) {
   } catch (error) {
     showToast("Upload ditolak", error.message);
   }
+}
+
+function selectAgendaFromControl(event) {
+  state.selectedId = Number(event.target.value) || null;
+  render();
+}
+
+function selectedAgendaByControl(controlId) {
+  const agendaID = Number(el(controlId).value);
+  const agenda = state.agendas.find((item) => item.id === agendaID) ?? selectedAgenda();
+  state.selectedId = agenda?.id ?? null;
+  return agenda;
 }
 
 function togglePassword() {

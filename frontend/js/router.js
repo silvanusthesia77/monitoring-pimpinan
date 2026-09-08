@@ -7,6 +7,7 @@ const routes = {
   "/validasi": "validasi",
   "/agenda": "agenda",
   "/detail": "detail",
+  "/dokumentasi": "dokumentasi",
   "/laporan": "laporan",
   "/notifikasi": "notifikasi",
 };

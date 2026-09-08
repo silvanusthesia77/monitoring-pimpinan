@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/styles.css?v=20260907-role-strict" />
+    <link rel="stylesheet" href="/styles.css?v=20260908-doc-report" />
   </head>
   <body class="antialiased">
     <main>
@@ -178,8 +178,11 @@
 
             <section id="leaderPanel" class="view-panel panel hidden">
               <p class="section-kicker">Validasi Pimpinan</p>
-              <h2 class="mt-1 text-xl font-black">Keputusan Kehadiran</h2>
+              <h2 class="mt-1 text-xl font-black">Validasi Agenda Terpilih</h2>
               <form id="validationForm" class="mt-4 grid gap-3">
+                <label class="form-label">Pilih agenda
+                  <select id="validationAgendaId" class="field"></select>
+                </label>
                 <div class="choice-group">
                   <label class="choice"><input type="radio" name="status" value="hadir" checked /> Hadir sendiri</label>
                   <label class="choice"><input type="radio" name="status" value="diwakili" /> Diwakili</label>
@@ -196,7 +199,6 @@
                 <label class="form-label">Keterangan pimpinan<textarea name="leader_note" class="field min-h-28"></textarea></label>
                 <div class="flex flex-wrap gap-3">
                   <button id="validationSubmit" class="button-primary" type="submit">Validasi</button>
-                  <button id="pullbackBtn" class="button-secondary" type="button">Tarik Kembali</button>
                 </div>
               </form>
             </section>
@@ -224,16 +226,25 @@
               <div id="downloadBox" class="mt-3 flex flex-wrap gap-2"></div>
             </section>
 
-            <section id="reportPanel" class="view-panel panel hidden">
-              <p class="section-kicker">Laporan Kegiatan</p>
+            <section id="documentationPanel" class="view-panel panel hidden">
+              <p class="section-kicker">Dokumentasi Kegiatan</p>
               <h2 class="mt-1 text-xl font-black">Upload Dokumentasi</h2>
-              <div id="reportAgendaBox" class="report-agenda-box"></div>
-              <p id="reportHint" class="action-hint"></p>
+              <label class="form-label mt-4">Pilih agenda
+                <select id="documentationAgendaId" class="field"></select>
+              </label>
+              <div id="documentationAgendaBox" class="report-agenda-box"></div>
+              <p id="documentationHint" class="action-hint"></p>
               <form id="reportForm" class="mt-4 grid gap-3">
                 <label class="form-label">File dokumentasi<input name="documentation" class="field file-field" type="file" required /></label>
                 <label class="form-label">Ringkasan laporan<textarea name="report_note" class="field min-h-24"></textarea></label>
                 <button id="reportSubmit" class="button-primary" type="submit">Simpan Laporan</button>
               </form>
+            </section>
+
+            <section id="reportsPanel" class="view-panel panel hidden">
+              <p class="section-kicker">Laporan</p>
+              <h2 class="mt-1 text-xl font-black">Berita Acara Kegiatan</h2>
+              <div id="reportsList" class="reports-list"></div>
             </section>
 
             <section id="notificationPanel" class="view-panel panel hidden">
@@ -245,6 +256,6 @@
         </div>
       </section>
     </main>
-    <script type="module" src="/app.js?v=20260907-role-strict"></script>
+    <script type="module" src="/app.js?v=20260908-doc-report"></script>
   </body>
 </html>
