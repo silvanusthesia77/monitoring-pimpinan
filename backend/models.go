@@ -100,6 +100,12 @@ func agendaLifecycle(decision string, startAt, endAt time.Time, hasDocumentation
 	if hasDocumentation {
 		return phaseDone, "Selesai"
 	}
+	if decision == statusWait {
+		if time.Until(startAt) < 24*time.Hour {
+			return phaseLocked, "Agenda Terkunci"
+		}
+		return phaseWaitingValidation, "Menunggu Validasi"
+	}
 	if !now.Before(endAt) {
 		return phaseWaitingDocumentation, "Menunggu Dokumentasi"
 	}
