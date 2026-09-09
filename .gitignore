@@ -17,3 +17,5 @@ dist/
 .vinext/
 .wrangler/
 backend/uploads/
+.env
+backend/.env

@@ -86,6 +86,10 @@ MYSQL_DSN="root:root@tcp(127.0.0.1:3306)/agenda_monitor?parseTime=true&multiStat
 Backend otomatis membaca `database/schema.sql`, membuat tabel, dan membuat akun
 demo jika tabel pengguna masih kosong.
 
+Backend juga otomatis membaca konfigurasi dari file `.env` atau `backend/.env`
+jika file tersebut ada. File `.env` sudah masuk `.gitignore`, jadi cocok untuk
+menyimpan password SMTP lokal tanpa ikut ter-commit.
+
 ## Email Notifikasi Gmail
 
 Email asli dikirim hanya untuk notifikasi yang memang ditujukan ke pimpinan, misalnya

@@ -6,6 +6,9 @@ import (
 )
 
 func main() {
+	loadEnvFile(".env")
+	loadEnvFile("backend/.env")
+
 	app, err := newApp()
 	if err != nil {
 		log.Fatal(err)
