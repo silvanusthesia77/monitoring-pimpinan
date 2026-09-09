@@ -154,14 +154,14 @@ func (app *App) createAgenda(w http.ResponseWriter, r *http.Request, user User) 
 	}
 
 	agendaID, _ := result.LastInsertId()
-	app.notifyRole(roleLeader, "Agenda baru menunggu validasi", title+" telah disubmit staf dan membutuhkan validasi pimpinan.", true)
+	emailStatus := app.notifyRole(roleLeader, "Agenda baru menunggu validasi", title+" telah disubmit staf dan membutuhkan validasi pimpinan.", true)
 
 	agenda, err := app.getAgenda(agendaID)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "Agenda tersimpan, tetapi gagal dimuat")
 		return
 	}
-	writeJSON(w, http.StatusCreated, agenda)
+	writeJSON(w, http.StatusCreated, AgendaCreateResponse{Agenda: agenda, EmailStatus: emailStatus})
 }
 
 func (app *App) validateAgenda(w http.ResponseWriter, r *http.Request, id int64, user User) {

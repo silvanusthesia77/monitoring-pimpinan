@@ -83,6 +83,17 @@ type Notification struct {
 	CreatedAt string `json:"created_at"`
 }
 
+type EmailDelivery struct {
+	Attempted bool   `json:"attempted"`
+	Sent      bool   `json:"sent"`
+	Message   string `json:"message"`
+}
+
+type AgendaCreateResponse struct {
+	Agenda      Agenda        `json:"agenda"`
+	EmailStatus EmailDelivery `json:"email_status"`
+}
+
 type agendaScanner interface {
 	Scan(dest ...any) error
 }

@@ -49,14 +49,32 @@ func (app *App) addNotification(audience, title, body string, emailSent bool) {
 	}
 }
 
-func (app *App) notifyRole(audience, title, body string, sendEmail bool) {
-	emailSent := false
+func (app *App) notifyRole(audience, title, body string, sendEmail bool) EmailDelivery {
+	delivery := EmailDelivery{
+		Attempted: sendEmail,
+		Message:   "Notifikasi web berhasil dibuat.",
+	}
+
 	if sendEmail {
-		var err error
-		emailSent, err = app.mailer.Send(app.emailsForRole(audience), title, body)
-		if err != nil {
-			log.Printf("gagal mengirim email notifikasi: %v", err)
+		recipients := app.emailsForRole(audience)
+		if len(recipients) == 0 {
+			delivery.Message = "Email gagal dikirim: tidak ada alamat penerima untuk role ini."
+		} else if !app.mailer.Enabled() {
+			delivery.Message = "Email belum terkirim: SMTP Gmail belum dikonfigurasi."
+			_, _ = app.mailer.Send(recipients, title, body)
+		} else {
+			emailSent, err := app.mailer.Send(recipients, title, body)
+			delivery.Sent = emailSent
+			if err != nil {
+				log.Printf("gagal mengirim email notifikasi: %v", err)
+				delivery.Message = "Email gagal dikirim: " + err.Error()
+			} else if emailSent {
+				delivery.Message = "Email berhasil dikirim ke Gmail pimpinan."
+			} else {
+				delivery.Message = "Email belum terkirim: SMTP Gmail belum mengirim pesan."
+			}
 		}
 	}
-	app.addNotification(audience, title, body, emailSent)
+	app.addNotification(audience, title, body, delivery.Sent)
+	return delivery
 }

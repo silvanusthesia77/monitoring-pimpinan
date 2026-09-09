@@ -180,11 +180,11 @@ async function createAgenda(event) {
   }
 
   try {
-    await api("/api/agendas", { method: "POST", body: new FormData(event.target) });
+    const result = await api("/api/agendas", { method: "POST", body: new FormData(event.target) });
     event.target.reset();
     setDefaultDates();
     await refresh({ alertNew: false });
-    showToast("Agenda terkirim", "Agenda baru sudah dikirim ke pimpinan.");
+    showToast("Agenda terkirim", result.email_status?.message || "Agenda baru sudah dikirim ke pimpinan.");
   } catch (error) {
     showToast("Gagal menyimpan agenda", error.message);
   }
