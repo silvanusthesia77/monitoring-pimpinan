@@ -282,7 +282,8 @@ function notificationItem(notice) {
     <article class="notification">
       <strong class="block">${escapeHtml(notice.title)}</strong>
       <p class="my-1 text-sm leading-6 text-slate-600">${escapeHtml(notice.body)}</p>
-      <time class="text-xs font-bold text-slate-500">${formatDate(notice.created_at)}${notice.email_sent ? " - email terkirim" : ""}</time>
+      ${notice.email_message ? `<p class="email-status ${notice.email_sent ? "sent" : "failed"}">${escapeHtml(notice.email_message)}</p>` : ""}
+      <time class="text-xs font-bold text-slate-500">${formatDate(notice.created_at)}</time>
     </article>
   `;
 }

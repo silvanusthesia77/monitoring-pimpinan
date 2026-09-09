@@ -75,12 +75,13 @@ type Agenda struct {
 }
 
 type Notification struct {
-	ID        int64  `json:"id"`
-	Audience  string `json:"audience"`
-	Title     string `json:"title"`
-	Body      string `json:"body"`
-	EmailSent bool   `json:"email_sent"`
-	CreatedAt string `json:"created_at"`
+	ID           int64  `json:"id"`
+	Audience     string `json:"audience"`
+	Title        string `json:"title"`
+	Body         string `json:"body"`
+	EmailSent    bool   `json:"email_sent"`
+	EmailMessage string `json:"email_message"`
+	CreatedAt    string `json:"created_at"`
 }
 
 type EmailDelivery struct {

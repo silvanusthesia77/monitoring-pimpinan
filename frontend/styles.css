@@ -860,6 +860,25 @@ dd {
   padding: 10px;
 }
 
+.email-status {
+  margin: 8px 0;
+  width: fit-content;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.email-status.sent {
+  background: #e8f5e9;
+  color: #216e39;
+}
+
+.email-status.failed {
+  background: #fff4e5;
+  color: #9a5b00;
+}
+
 .toast-container {
   position: fixed;
   right: 18px;

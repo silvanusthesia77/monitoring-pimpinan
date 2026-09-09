@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS notifications (
   title VARCHAR(180) NOT NULL,
   body TEXT NOT NULL,
   email_sent BOOLEAN NOT NULL DEFAULT FALSE,
+  email_message VARCHAR(255) NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_notifications_audience_created (audience, created_at)
 );

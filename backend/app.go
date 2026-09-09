@@ -38,6 +38,9 @@ func newApp() (*App, error) {
 	if err := applySchema(db); err != nil {
 		return nil, err
 	}
+	if err := migrateNotificationEmailMessage(db); err != nil {
+		return nil, err
+	}
 	if err := migrateDefaultLeaderEmail(db); err != nil {
 		return nil, err
 	}
@@ -111,6 +114,24 @@ func applySchema(db *sql.DB) error {
 		return err
 	}
 	_, err = db.Exec(string(schema))
+	return err
+}
+
+func migrateNotificationEmailMessage(db *sql.DB) error {
+	var columnName string
+	err := db.QueryRow(`
+		SELECT COLUMN_NAME
+		FROM INFORMATION_SCHEMA.COLUMNS
+		WHERE TABLE_SCHEMA = DATABASE()
+			AND TABLE_NAME = 'notifications'
+			AND COLUMN_NAME = 'email_message'`).Scan(&columnName)
+	if err == nil {
+		return nil
+	}
+	if err != sql.ErrNoRows {
+		return err
+	}
+	_, err = db.Exec("ALTER TABLE notifications ADD COLUMN email_message VARCHAR(255) NULL AFTER email_sent")
 	return err
 }
 

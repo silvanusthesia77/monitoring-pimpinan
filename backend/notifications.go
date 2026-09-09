@@ -14,7 +14,7 @@ func (app *App) notifications(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rows, err := app.db.Query(`
-		SELECT id, audience, title, body, email_sent, created_at
+		SELECT id, audience, title, body, email_sent, COALESCE(email_message, ''), created_at
 		FROM notifications
 		WHERE audience IN (?, 'semua')
 		ORDER BY created_at DESC
@@ -29,7 +29,7 @@ func (app *App) notifications(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var item Notification
 		var createdAt time.Time
-		if err := rows.Scan(&item.ID, &item.Audience, &item.Title, &item.Body, &item.EmailSent, &createdAt); err != nil {
+		if err := rows.Scan(&item.ID, &item.Audience, &item.Title, &item.Body, &item.EmailSent, &item.EmailMessage, &createdAt); err != nil {
 			writeError(w, http.StatusInternalServerError, "Gagal membaca notifikasi")
 			return
 		}
@@ -39,10 +39,10 @@ func (app *App) notifications(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, notifications)
 }
 
-func (app *App) addNotification(audience, title, body string, emailSent bool) {
+func (app *App) addNotification(audience, title, body string, emailSent bool, emailMessage string) {
 	_, err := app.db.Exec(
-		"INSERT INTO notifications (audience, title, body, email_sent) VALUES (?, ?, ?, ?)",
-		audience, title, body, emailSent,
+		"INSERT INTO notifications (audience, title, body, email_sent, email_message) VALUES (?, ?, ?, ?, NULLIF(?, ''))",
+		audience, title, body, emailSent, emailMessage,
 	)
 	if err != nil {
 		log.Printf("gagal menyimpan notifikasi: %v", err)
@@ -75,6 +75,10 @@ func (app *App) notifyRole(audience, title, body string, sendEmail bool) EmailDe
 			}
 		}
 	}
-	app.addNotification(audience, title, body, delivery.Sent)
+	emailMessage := ""
+	if delivery.Attempted {
+		emailMessage = delivery.Message
+	}
+	app.addNotification(audience, title, body, delivery.Sent, emailMessage)
 	return delivery
 }
