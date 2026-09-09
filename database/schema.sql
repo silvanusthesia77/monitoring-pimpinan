@@ -3,19 +3,8 @@ CREATE TABLE IF NOT EXISTS users (
   name VARCHAR(120) NOT NULL,
   email VARCHAR(160) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
-  role ENUM('admin', 'staf', 'pimpinan') NOT NULL,
-  position VARCHAR(160) NOT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS registration_codes (
-  email VARCHAR(160) PRIMARY KEY,
-  code_hash VARCHAR(255) NOT NULL,
-  name VARCHAR(120) NOT NULL,
-  password_hash VARCHAR(255) NOT NULL,
   role ENUM('staf', 'pimpinan') NOT NULL,
   position VARCHAR(160) NOT NULL,
-  expires_at DATETIME NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

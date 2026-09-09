@@ -6,7 +6,6 @@ import (
 )
 
 const (
-	roleAdmin                 = "admin"
 	roleStaff                 = "staf"
 	roleLeader                = "pimpinan"
 	roleAll                   = "semua"
@@ -38,12 +37,6 @@ type User struct {
 	Email    string `json:"email"`
 	Role     string `json:"role"`
 	Position string `json:"position"`
-}
-
-type UserListItem struct {
-	User
-	CreatedAt string `json:"created_at"`
-	CanDelete bool   `json:"can_delete"`
 }
 
 type FileRecord struct {

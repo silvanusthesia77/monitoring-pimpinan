@@ -6,10 +6,8 @@ HTML, CSS, serta Tailwind CSS.
 
 ## Fitur
 
-- Login tiga aktor: admin, staf, dan pimpinan
-- Login akun Gmail staf/pimpinan memakai OTP yang dikirim ke Gmail
-- Admin mengelola user dan dapat menghapus akun user
-- Daftar staf/pimpinan memakai verifikasi kode OTP ke akun Gmail aktif
+- Login dua aktor: staf dan pimpinan
+- Login akun Gmail pimpinan memakai OTP yang dikirim ke Gmail
 - Staf menginput jadwal kunjungan pimpinan
 - Staf upload undangan dan mengisi keterangan agenda
 - Pimpinan menerima alert dan email saat agenda disubmit
@@ -26,15 +24,11 @@ HTML, CSS, serta Tailwind CSS.
 
 | Role | Email | Password |
 | --- | --- | --- |
-| Admin | `admin@sorsel.go.id` | `agenda123` |
 | Staf | `staf@sorsel.go.id` | `agenda123` |
-| Pimpinan | `sergiodyego45@gmail.com` | `agenda123` |
+| Pimpinan | `silvanusthesia1@gmail.com` | `agenda123` |
 
-Tab `Daftar` dipakai untuk staf/pimpinan dengan akun Gmail aktif. Sistem akan
-mengirim kode verifikasi ke Gmail tersebut, lalu akun dibuat setelah kode benar.
-Admin memakai akun bawaan dan mengelola user dari menu `Kelola User`.
-Saat login, akun staf/pimpinan yang memakai Gmail juga menerima OTP Gmail sebelum
-masuk dashboard.
+Halaman register dan role admin sudah tidak dipakai. Staf memakai email dummy
+bawaan, sedangkan pimpinan memakai Gmail agar bisa menerima notifikasi dan OTP.
 
 ## Menjalankan Dengan Docker
 
@@ -95,20 +89,19 @@ demo jika tabel pengguna masih kosong.
 ## Email Notifikasi Gmail
 
 Email asli dikirim hanya untuk notifikasi yang memang ditujukan ke pimpinan, misalnya
-saat staf submit agenda baru. Akun pimpinan default memakai `sergiodyego45@gmail.com`.
+saat staf submit agenda baru. Akun pimpinan default memakai `silvanusthesia1@gmail.com`.
 
-Password login aplikasi tetap password akun aplikasi, misalnya `agenda123` atau
-password yang dibuat sendiri dari tab `Daftar`. Verifikasi daftar dan login OTP
-Gmail memakai SMTP Gmail untuk mengirim kode. Untuk SMTP Gmail, gunakan
-**App Password** khusus pengiriman email, bukan password login Gmail biasa. Setelah
-App Password dibuat, jalankan backend dengan environment berikut:
+Password login aplikasi tetap password akun aplikasi, yaitu `agenda123` untuk akun
+demo. OTP login pimpinan dan email notifikasi dikirim lewat SMTP Gmail. Untuk SMTP
+Gmail, gunakan **App Password** khusus pengiriman email, bukan password login Gmail
+biasa. Setelah App Password dibuat, jalankan backend dengan environment berikut:
 
 ```bash
 SMTP_HOST="smtp.gmail.com" \
 SMTP_PORT="587" \
-SMTP_USERNAME="sergiodyego45@gmail.com" \
+SMTP_USERNAME="groundclerence@gmail.com" \
 SMTP_PASSWORD="app-password" \
-SMTP_FROM="sergiodyego45@gmail.com" \
+SMTP_FROM="groundclerence@gmail.com" \
 MYSQL_DSN="root:root@tcp(127.0.0.1:3306)/agenda_monitor?parseTime=true&multiStatements=true" \
 go run .
 ```
@@ -118,9 +111,9 @@ Contoh PowerShell Windows:
 ```powershell
 $env:SMTP_HOST="smtp.gmail.com"
 $env:SMTP_PORT="587"
-$env:SMTP_USERNAME="sergiodyego45@gmail.com"
+$env:SMTP_USERNAME="groundclerence@gmail.com"
 $env:SMTP_PASSWORD="app-password"
-$env:SMTP_FROM="sergiodyego45@gmail.com"
+$env:SMTP_FROM="groundclerence@gmail.com"
 $env:MYSQL_DSN="root:root@tcp(127.0.0.1:3306)/agenda_monitor?parseTime=true&multiStatements=true"
 go run .
 ```

@@ -22,7 +22,6 @@ export function render() {
   renderStats();
   renderAgendaList();
   renderAgendaTable();
-  renderUsers();
   syncActiveSelectionForView();
   renderFormSelectors();
   renderReports();
@@ -81,7 +80,6 @@ function renderNavigation() {
 }
 
 function renderActiveView() {
-  const isAdmin = state.user.role === "admin";
   const isStaff = state.user.role === "staf";
   const isLeader = state.user.role === "pimpinan";
   const allowedViews = navItems().map((item) => item.id);
@@ -89,16 +87,15 @@ function renderActiveView() {
     navigateToView("dashboard");
   }
 
-  el("agendaSidebarCard").classList.toggle("hidden", isAdmin);
+  el("agendaSidebarCard").classList.remove("hidden");
   toggleView("dashboardPanel", state.activeView === "dashboard");
-  toggleView("userPanel", isAdmin && state.activeView === "users");
-  toggleView("agendaPanel", !isAdmin && state.activeView === "agenda");
-  toggleView("detailPanel", !isAdmin && state.activeView === "detail");
+  toggleView("agendaPanel", state.activeView === "agenda");
+  toggleView("detailPanel", state.activeView === "detail");
   toggleView("staffPanel", isStaff && state.activeView === "input");
   toggleView("leaderPanel", isLeader && state.activeView === "validasi");
   toggleView("documentationPanel", isStaff && state.activeView === "dokumentasi");
-  toggleView("reportsPanel", !isAdmin && state.activeView === "laporan");
-  toggleView("notificationPanel", !isAdmin && state.activeView === "notifikasi");
+  toggleView("reportsPanel", state.activeView === "laporan");
+  toggleView("notificationPanel", state.activeView === "notifikasi");
 }
 
 function renderDetail() {
@@ -183,35 +180,6 @@ function renderAgendaTable() {
       render();
     });
   });
-}
-
-function renderUsers() {
-  const table = el("userTable");
-  const count = el("userCount");
-  if (!table || !count) return;
-
-  count.textContent = `${state.users.length} user`;
-  table.innerHTML = state.users.length
-    ? state.users.map(userRow).join("")
-    : `<p class="empty-text">Belum ada user.</p>`;
-}
-
-function userRow(user) {
-  return `
-    <article class="user-row">
-      <span>
-        <strong>${escapeHtml(user.name)}</strong>
-        <small>${escapeHtml(user.email)}</small>
-      </span>
-      <span class="badge">${roleLabel(user.role)}</span>
-      <span>${escapeHtml(user.position)}</span>
-      ${
-        user.can_delete
-          ? `<button class="button-danger delete-user-btn" data-id="${user.id}" data-name="${escapeHtml(user.name)}" type="button">Hapus</button>`
-          : `<span class="badge">Akun aktif</span>`
-      }
-    </article>
-  `;
 }
 
 function renderNotifications() {
@@ -427,13 +395,6 @@ function navItems() {
     ];
   }
 
-  if (state.user.role === "admin") {
-    return [
-      common[0],
-      { id: "users", label: "Kelola User", icon: "users", count: state.users.length },
-    ];
-  }
-
   return [
     common[0],
     { id: "validasi", label: "Validasi", icon: "check" },
@@ -445,7 +406,6 @@ function navItems() {
 }
 
 function roleLabel(role) {
-  if (role === "admin") return "Admin";
   if (role === "staf") return "Staf";
   return "Pimpinan";
 }

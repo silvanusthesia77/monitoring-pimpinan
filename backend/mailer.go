@@ -18,11 +18,11 @@ type Mailer struct {
 
 func newMailerFromEnv() Mailer {
 	return Mailer{
-		Host:     env("SMTP_HOST", ""),
+		Host:     env("SMTP_HOST", "smtp.gmail.com"),
 		Port:     env("SMTP_PORT", "587"),
-		Username: env("SMTP_USERNAME", ""),
+		Username: env("SMTP_USERNAME", "groundclerence@gmail.com"),
 		Password: env("SMTP_PASSWORD", ""),
-		From:     env("SMTP_FROM", env("SMTP_USERNAME", "noreply@sorsel.go.id")),
+		From:     env("SMTP_FROM", env("SMTP_USERNAME", "groundclerence@gmail.com")),
 	}
 }
 

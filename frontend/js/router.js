@@ -3,7 +3,6 @@ import { state } from "./state.js";
 const routes = {
   "/": "dashboard",
   "/dashboard": "dashboard",
-  "/users": "users",
   "/input-jadwal": "input",
   "/validasi": "validasi",
   "/agenda": "agenda",

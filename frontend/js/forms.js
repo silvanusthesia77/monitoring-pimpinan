@@ -1,21 +1,16 @@
 import { api } from "./api.js";
 import { el, toInputTime } from "./dom.js";
 import { navigateToView, syncViewFromPath } from "./router.js";
-import { clearSessionState, selectedAgenda, setDashboardData, setUsers, state } from "./state.js";
+import { clearSessionState, selectedAgenda, setDashboardData, state } from "./state.js";
 import { render, showApp, showLogin } from "./render.js";
 
 export function bindEvents() {
   el("loginForm").addEventListener("submit", login);
-  el("registerForm").addEventListener("submit", register);
   el("role").addEventListener("change", fillDemoAccount);
   el("email").addEventListener("input", resetLoginVerification);
   el("password").addEventListener("input", resetLoginVerification);
-  el("showLoginForm").addEventListener("click", () => showAuthForm("login"));
-  el("showRegisterForm").addEventListener("click", () => showAuthForm("register"));
   el("logoutBtn").addEventListener("click", logout);
   el("togglePassword").addEventListener("click", togglePassword);
-  el("toggleRegisterPassword").addEventListener("click", () => togglePasswordField("registerPassword", "toggleRegisterPassword"));
-  el("registerEmail").addEventListener("input", resetRegisterVerification);
   el("agendaForm").addEventListener("submit", createAgenda);
   el("validationForm").addEventListener("submit", validateAgenda);
   el("pullbackSubmit").addEventListener("click", pullBackValidation);
@@ -23,7 +18,6 @@ export function bindEvents() {
   el("documentationAgendaId").addEventListener("change", selectAgendaFromControl);
   el("reportForm").addEventListener("submit", uploadDocumentation);
   document.addEventListener("click", deleteAgenda);
-  document.addEventListener("click", deleteUser);
   window.addEventListener("popstate", () => {
     if (!state.user) {
       showLogin();
@@ -109,74 +103,15 @@ async function login(event) {
   }
 }
 
-async function register(event) {
-  event.preventDefault();
-  el("registerError").classList.add("hidden");
-  if (hasPasswordSpace(el("registerPassword").value)) {
-    el("registerError").textContent = "Password tidak boleh mengandung spasi.";
-    el("registerError").classList.remove("hidden");
-    return;
-  }
-
-  try {
-    const result = await api("/api/register", {
-      method: "POST",
-      body: JSON.stringify({
-        role: el("registerRole").value,
-        name: el("registerName").value,
-        position: el("registerPosition").value,
-        email: el("registerEmail").value,
-        password: el("registerPassword").value,
-        code: el("registerCode").value,
-      }),
-      headers: { "Content-Type": "application/json" },
-    });
-    if (result.pending_verification) {
-      el("registerCodeLabel").classList.remove("hidden");
-      el("registerSubmit").textContent = "Verifikasi & Masuk";
-      el("registerError").textContent = result.message || "Kode verifikasi sudah dikirim ke Gmail.";
-      el("registerError").classList.remove("hidden");
-      el("registerError").classList.remove("bg-red-50", "text-red-700");
-      el("registerError").classList.add("bg-blue-50", "text-blue-700");
-      return;
-    }
-
-    state.user = result;
-    event.target.reset();
-    resetRegisterVerification();
-    await refresh({ alertNew: false });
-    navigateToView(defaultView());
-    showApp();
-    startNotificationPolling();
-  } catch (error) {
-    el("registerError").textContent = error.message;
-    el("registerError").classList.add("bg-red-50", "text-red-700");
-    el("registerError").classList.remove("bg-blue-50", "text-blue-700");
-    el("registerError").classList.remove("hidden");
-  }
-}
-
 function fillDemoAccount() {
   const role = el("role").value;
-  if (role === "admin") {
-    el("email").value = "admin@sorsel.go.id";
-  } else {
-    el("email").value = role === "pimpinan" ? "sergiodyego45@gmail.com" : "staf@sorsel.go.id";
-  }
+  el("email").value = role === "pimpinan" ? "silvanusthesia1@gmail.com" : "staf@sorsel.go.id";
   el("password").value = "agenda123";
   resetLoginVerification();
 }
 
 function hasPasswordSpace(password) {
   return /\s/.test(password);
-}
-
-function resetRegisterVerification() {
-  el("registerCode").value = "";
-  el("registerCodeLabel").classList.add("hidden");
-  el("registerSubmit").textContent = "Kirim Kode Verifikasi";
-  el("registerError").classList.add("hidden", "bg-red-50", "text-red-700");
-  el("registerError").classList.remove("bg-blue-50", "text-blue-700");
 }
 
 function resetLoginVerification() {
@@ -195,22 +130,12 @@ async function logout() {
 }
 
 async function refresh({ alertNew = true } = {}) {
-  if (state.user?.role === "admin") {
-    const users = await api("/api/users");
-    setDashboardData([], []);
-    setUsers(users);
-    render();
-    return;
-  }
-
-  const [agendas, notifications, users] = await Promise.all([
+  const [agendas, notifications] = await Promise.all([
     api("/api/agendas"),
     api("/api/notifications"),
-    Promise.resolve([]),
   ]);
   const oldIds = new Set(state.seenNotificationIds);
   setDashboardData(agendas, notifications);
-  setUsers(users);
   render();
   showNotificationAlerts(notifications, oldIds, alertNew);
   state.seenNotificationIds = new Set(notifications.map((notice) => notice.id));
@@ -218,29 +143,6 @@ async function refresh({ alertNew = true } = {}) {
 
 function defaultView() {
   return "dashboard";
-}
-
-async function deleteUser(event) {
-  const button = event.target.closest(".delete-user-btn");
-  if (!button) return;
-
-  const userID = Number(button.dataset.id);
-  const userName = button.dataset.name || "user ini";
-  if (!userID) {
-    showToast("Hapus user ditolak", "Pilih user terlebih dahulu.");
-    return;
-  }
-  if (!window.confirm(`Hapus ${userName}? Akun ini tidak bisa login lagi.`)) {
-    return;
-  }
-
-  try {
-    await api(`/api/users/${userID}`, { method: "DELETE" });
-    await refresh({ alertNew: false });
-    showToast("User dihapus", "Akun berhasil dihapus dari sistem.");
-  } catch (error) {
-    showToast("Hapus user ditolak", error.message);
-  }
 }
 
 async function deleteAgenda(event) {
@@ -437,19 +339,6 @@ function togglePasswordField(inputId, buttonId) {
   button.setAttribute("aria-label", isHidden ? "Sembunyikan password" : "Lihat password");
   button.setAttribute("title", isHidden ? "Sembunyikan password" : "Lihat password");
   button.classList.toggle("is-visible", isHidden);
-}
-
-function showAuthForm(mode) {
-  const isRegister = mode === "register";
-  el("loginForm").classList.toggle("hidden", isRegister);
-  el("registerForm").classList.toggle("hidden", !isRegister);
-  el("showLoginForm").classList.toggle("active", !isRegister);
-  el("showRegisterForm").classList.toggle("active", isRegister);
-  el("authTitle").textContent = isRegister ? "Daftar pengguna" : "Login pengguna";
-  el("loginError").classList.add("hidden");
-  el("registerError").classList.add("hidden");
-  if (isRegister) resetLoginVerification();
-  if (!isRegister) resetRegisterVerification();
 }
 
 function startNotificationPolling() {

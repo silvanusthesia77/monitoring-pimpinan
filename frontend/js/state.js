@@ -1,6 +1,5 @@
 export const state = {
   user: null,
-  users: [],
   agendas: [],
   notifications: [],
   seenNotificationIds: new Set(),
@@ -15,7 +14,6 @@ export function selectedAgenda() {
 
 export function clearSessionState() {
   state.user = null;
-  state.users = [];
   state.agendas = [];
   state.notifications = [];
   state.seenNotificationIds = new Set();
@@ -35,8 +33,4 @@ export function setDashboardData(agendas, notifications) {
   if (!selectedExists) {
     state.selectedId = state.agendas[0]?.id ?? null;
   }
-}
-
-export function setUsers(users) {
-  state.users = Array.isArray(users) ? users : [];
 }

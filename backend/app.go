@@ -20,10 +20,8 @@ const (
 	defaultFrontendDir = "../frontend"
 	defaultSchemaFile  = "../database/schema.sql"
 	defaultPassword    = "agenda123"
-	defaultAdminEmail  = "admin@sorsel.go.id"
 	defaultStaffEmail  = "staf@sorsel.go.id"
-	defaultLeaderEmail = "sergiodyego45@gmail.com"
-	legacyLeaderEmail  = "pimpinan@sorsel.go.id"
+	defaultLeaderEmail = "silvanusthesia1@gmail.com"
 )
 
 func newApp() (*App, error) {
@@ -40,13 +38,13 @@ func newApp() (*App, error) {
 	if err := applySchema(db); err != nil {
 		return nil, err
 	}
-	if err := migrateUserRoleEnum(db); err != nil {
-		return nil, err
-	}
 	if err := migrateDefaultLeaderEmail(db); err != nil {
 		return nil, err
 	}
 	if err := seedUsers(db); err != nil {
+		return nil, err
+	}
+	if err := removeAdminRole(db); err != nil {
 		return nil, err
 	}
 	if err := seedDemoAgendas(db); err != nil {
@@ -70,11 +68,8 @@ func newApp() (*App, error) {
 func (app *App) routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/login", app.login)
-	mux.HandleFunc("/api/register", app.register)
 	mux.HandleFunc("/api/logout", app.logout)
 	mux.HandleFunc("/api/me", app.me)
-	mux.HandleFunc("/api/users", app.users)
-	mux.HandleFunc("/api/users/", app.userAction)
 	mux.HandleFunc("/api/agendas", app.agendas)
 	mux.HandleFunc("/api/agendas/", app.agendaAction)
 	mux.HandleFunc("/api/notifications", app.notifications)
@@ -120,19 +115,9 @@ func applySchema(db *sql.DB) error {
 }
 
 func seedUsers(db *sql.DB) error {
-	var count int
-	if err := db.QueryRow("SELECT COUNT(*) FROM users").Scan(&count); err != nil {
-		return err
-	}
-
 	users := []User{
-		{Name: "Administrator", Email: defaultAdminEmail, Role: roleAdmin, Position: "Admin Sistem"},
-	}
-	if count == 0 {
-		users = append(users,
-			User{Name: "Admin Staf", Email: defaultStaffEmail, Role: roleStaff, Position: "Staf Protokol"},
-			User{Name: "Pimpinan Daerah", Email: defaultLeaderEmail, Role: roleLeader, Position: "Pimpinan Kabupaten Sorong Selatan"},
-		)
+		{Name: "Staf Protokol", Email: defaultStaffEmail, Role: roleStaff, Position: "Staf Protokol"},
+		{Name: "Pimpinan Daerah", Email: defaultLeaderEmail, Role: roleLeader, Position: "Pimpinan Kabupaten Sorong Selatan"},
 	}
 
 	for _, user := range users {
@@ -141,7 +126,12 @@ func seedUsers(db *sql.DB) error {
 			return err
 		}
 		_, err = db.Exec(
-			"INSERT IGNORE INTO users (name, email, password_hash, role, position) VALUES (?, ?, ?, ?, ?)",
+			`INSERT INTO users (name, email, password_hash, role, position)
+			VALUES (?, ?, ?, ?, ?)
+			ON DUPLICATE KEY UPDATE
+				name = VALUES(name),
+				role = VALUES(role),
+				position = VALUES(position)`,
 			user.Name, user.Email, string(hash), user.Role, user.Position,
 		)
 		if err != nil {
@@ -151,25 +141,109 @@ func seedUsers(db *sql.DB) error {
 	return nil
 }
 
-func migrateUserRoleEnum(db *sql.DB) error {
-	_, err := db.Exec("ALTER TABLE users MODIFY role ENUM('admin', 'staf', 'pimpinan') NOT NULL")
-	return err
-}
-
 func migrateDefaultLeaderEmail(db *sql.DB) error {
-	var existingID int64
-	err := db.QueryRow("SELECT id FROM users WHERE email = ?", defaultLeaderEmail).Scan(&existingID)
-	if err == nil {
+	legacyEmails := []string{"pimpinan@sorsel.go.id", "sergiodyego45@gmail.com"}
+
+	var leaderID int64
+	err := db.QueryRow("SELECT id FROM users WHERE email = ?", defaultLeaderEmail).Scan(&leaderID)
+	if err == sql.ErrNoRows {
+		for _, legacyEmail := range legacyEmails {
+			result, err := db.Exec(
+				"UPDATE users SET email = ? WHERE email = ? AND role = ?",
+				defaultLeaderEmail, legacyEmail, roleLeader,
+			)
+			if err != nil {
+				return err
+			}
+			if rows, _ := result.RowsAffected(); rows > 0 {
+				break
+			}
+		}
+		err = db.QueryRow("SELECT id FROM users WHERE email = ?", defaultLeaderEmail).Scan(&leaderID)
+	}
+	if err == sql.ErrNoRows {
 		return nil
 	}
-	if err != sql.ErrNoRows {
+	if err != nil {
 		return err
 	}
 
-	_, err = db.Exec(
-		"UPDATE users SET email = ? WHERE email = ? AND role = ?",
-		defaultLeaderEmail, legacyLeaderEmail, roleLeader,
-	)
+	for _, legacyEmail := range legacyEmails {
+		var legacyID int64
+		err := db.QueryRow("SELECT id FROM users WHERE email = ? AND role = ?", legacyEmail, roleLeader).Scan(&legacyID)
+		if err == sql.ErrNoRows {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		if legacyID == leaderID {
+			continue
+		}
+		if _, err := db.Exec(
+			"UPDATE files SET uploaded_by = ? WHERE uploaded_by = ?",
+			leaderID, legacyID,
+		); err != nil {
+			return err
+		}
+		if _, err := db.Exec(
+			"UPDATE agendas SET created_by = ? WHERE created_by = ?",
+			leaderID, legacyID,
+		); err != nil {
+			return err
+		}
+		if _, err := db.Exec(
+			"UPDATE agendas SET validated_by = ? WHERE validated_by = ?",
+			leaderID, legacyID,
+		); err != nil {
+			return err
+		}
+		if _, err := db.Exec(
+			"DELETE FROM users WHERE id = ?",
+			legacyID,
+		); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func removeAdminRole(db *sql.DB) error {
+	var staffID int64
+	if err := db.QueryRow("SELECT id FROM users WHERE email = ?", defaultStaffEmail).Scan(&staffID); err != nil {
+		return err
+	}
+
+	if _, err := db.Exec("ALTER TABLE users MODIFY role ENUM('admin', 'staf', 'pimpinan') NOT NULL"); err != nil {
+		return err
+	}
+
+	if _, err := db.Exec(`
+		UPDATE files
+		SET uploaded_by = ?
+		WHERE uploaded_by IN (SELECT id FROM users WHERE role = 'admin')`, staffID); err != nil {
+		return err
+	}
+	if _, err := db.Exec(`
+		UPDATE agendas
+		SET created_by = ?
+		WHERE created_by IN (SELECT id FROM users WHERE role = 'admin')`, staffID); err != nil {
+		return err
+	}
+	if _, err := db.Exec(`
+		UPDATE agendas
+		SET validated_by = NULL
+		WHERE validated_by IN (SELECT id FROM users WHERE role = 'admin')`); err != nil {
+		return err
+	}
+	if _, err := db.Exec("DELETE FROM users WHERE role = 'admin'"); err != nil {
+		return err
+	}
+	if _, err := db.Exec("DROP TABLE IF EXISTS registration_codes"); err != nil {
+		return err
+	}
+	_, err := db.Exec("ALTER TABLE users MODIFY role ENUM('staf', 'pimpinan') NOT NULL")
 	return err
 }
 
