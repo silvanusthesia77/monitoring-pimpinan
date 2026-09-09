@@ -103,9 +103,9 @@ biasa. Setelah App Password dibuat, jalankan backend dengan environment berikut:
 ```bash
 SMTP_HOST="smtp.gmail.com" \
 SMTP_PORT="587" \
-SMTP_USERNAME="groundclerence@gmail.com" \
+SMTP_USERNAME="danpixelwrld@gmail.com" \
 SMTP_PASSWORD="app-password" \
-SMTP_FROM="groundclerence@gmail.com" \
+SMTP_FROM="danpixelwrld@gmail.com" \
 MYSQL_DSN="root:root@tcp(127.0.0.1:3306)/agenda_monitor?parseTime=true&multiStatements=true" \
 go run .
 ```
@@ -115,9 +115,9 @@ Contoh PowerShell Windows:
 ```powershell
 $env:SMTP_HOST="smtp.gmail.com"
 $env:SMTP_PORT="587"
-$env:SMTP_USERNAME="groundclerence@gmail.com"
+$env:SMTP_USERNAME="danpixelwrld@gmail.com"
 $env:SMTP_PASSWORD="app-password"
-$env:SMTP_FROM="groundclerence@gmail.com"
+$env:SMTP_FROM="danpixelwrld@gmail.com"
 $env:MYSQL_DSN="root:root@tcp(127.0.0.1:3306)/agenda_monitor?parseTime=true&multiStatements=true"
 go run .
 ```

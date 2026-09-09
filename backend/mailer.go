@@ -20,9 +20,9 @@ func newMailerFromEnv() Mailer {
 	return Mailer{
 		Host:     env("SMTP_HOST", "smtp.gmail.com"),
 		Port:     env("SMTP_PORT", "587"),
-		Username: env("SMTP_USERNAME", "groundclerence@gmail.com"),
+		Username: env("SMTP_USERNAME", "danpixelwrld@gmail.com"),
 		Password: env("SMTP_PASSWORD", ""),
-		From:     env("SMTP_FROM", env("SMTP_USERNAME", "groundclerence@gmail.com")),
+		From:     env("SMTP_FROM", env("SMTP_USERNAME", "danpixelwrld@gmail.com")),
 	}
 }
 
