@@ -154,8 +154,16 @@ func (app *App) createAgenda(w http.ResponseWriter, r *http.Request, user User) 
 	}
 
 	agendaID, _ := result.LastInsertId()
+	attachments := []EmailAttachment{}
+	if attachment, err := app.emailAttachment(fileID); err == nil {
+		attachments = append(attachments, attachment)
+	}
 	notificationBody := title + " telah disubmit staf dan membutuhkan validasi pimpinan."
-	emailStatus := app.notifyRole(roleLeader, "Agenda baru menunggu validasi", notificationBody, true, newAgendaEmailBody(title, location, organizer, staffNote, startAt, endAt))
+	emailStatus := app.notifyRole(roleLeader, "Agenda baru menunggu validasi", notificationBody, true, EmailOption{
+		Body:            newAgendaEmailBody(title, location, organizer, staffNote, startAt, endAt),
+		Attachments:     attachments,
+		RelatedAgendaID: agendaID,
+	})
 
 	agenda, err := app.getAgenda(agendaID)
 	if err != nil {

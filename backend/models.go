@@ -77,6 +77,7 @@ type Agenda struct {
 type Notification struct {
 	ID           int64  `json:"id"`
 	Audience     string `json:"audience"`
+	AgendaID     *int64 `json:"agenda_id"`
 	Title        string `json:"title"`
 	Body         string `json:"body"`
 	EmailSent    bool   `json:"email_sent"`
@@ -88,6 +89,12 @@ type EmailDelivery struct {
 	Attempted bool   `json:"attempted"`
 	Sent      bool   `json:"sent"`
 	Message   string `json:"message"`
+}
+
+type EmailOption struct {
+	Body            string
+	Attachments     []EmailAttachment
+	RelatedAgendaID int64
 }
 
 type AgendaCreateResponse struct {

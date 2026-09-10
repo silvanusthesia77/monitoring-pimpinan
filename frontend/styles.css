@@ -854,10 +854,23 @@ dd {
 }
 
 .notification {
+  width: 100%;
   border-left: 4px solid #3b7ddd;
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
   border-radius: 4px;
   background: #f8f9fa;
   padding: 10px;
+  text-align: left;
+}
+
+.notification.clickable {
+  cursor: pointer;
+}
+
+.notification.clickable:hover {
+  background: #edf4ff;
 }
 
 .email-status {

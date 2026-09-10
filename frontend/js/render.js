@@ -186,6 +186,14 @@ function renderNotifications() {
   el("notificationList").innerHTML = state.notifications.length
     ? state.notifications.map(notificationItem).join("")
     : `<p class="text-sm font-bold text-slate-500">Belum ada notifikasi.</p>`;
+
+  document.querySelectorAll(".notification[data-agenda-id]").forEach((item) => {
+    item.addEventListener("click", () => {
+      state.selectedId = Number(item.dataset.agendaId);
+      navigateToView("detail");
+      render();
+    });
+  });
 }
 
 function agendaItem(agenda) {
@@ -278,13 +286,15 @@ function reportCard(agenda) {
 }
 
 function notificationItem(notice) {
+  const tag = notice.agenda_id ? "button" : "article";
+  const action = notice.agenda_id ? `data-agenda-id="${notice.agenda_id}" type="button"` : "";
   return `
-    <article class="notification">
+    <${tag} class="notification ${notice.agenda_id ? "clickable" : ""}" ${action}>
       <strong class="block">${escapeHtml(notice.title)}</strong>
       <p class="my-1 text-sm leading-6 text-slate-600">${escapeHtml(notice.body)}</p>
       ${notice.email_message ? `<p class="email-status ${notice.email_sent ? "sent" : "failed"}">${escapeHtml(notice.email_message)}</p>` : ""}
       <time class="text-xs font-bold text-slate-500">${formatDate(notice.created_at)}</time>
-    </article>
+    </${tag}>
   `;
 }
 

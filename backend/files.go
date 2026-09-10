@@ -67,6 +67,19 @@ func (app *App) saveUpload(fh *multipart.FileHeader, userID int64) (int64, error
 	return result.LastInsertId()
 }
 
+func (app *App) emailAttachment(fileID int64) (EmailAttachment, error) {
+	var attachment EmailAttachment
+	var storedName string
+	err := app.db.QueryRow("SELECT original_name, stored_name, mime_type FROM files WHERE id = ?", fileID).
+		Scan(&attachment.Filename, &storedName, &attachment.MimeType)
+	if err != nil {
+		return EmailAttachment{}, err
+	}
+	attachment.Path = filepath.Join(app.uploadDir, storedName)
+	attachment.Inline = strings.HasPrefix(attachment.MimeType, "image/")
+	return attachment, nil
+}
+
 func firstUploadedFile(r *http.Request, field string) (*multipart.FileHeader, bool) {
 	files := r.MultipartForm.File[field]
 	if len(files) == 0 {

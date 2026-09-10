@@ -58,10 +58,12 @@ CREATE TABLE IF NOT EXISTS agendas (
 CREATE TABLE IF NOT EXISTS notifications (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
   audience ENUM('staf', 'pimpinan', 'semua') NOT NULL,
+  agenda_id BIGINT NULL,
   title VARCHAR(180) NOT NULL,
   body TEXT NOT NULL,
   email_sent BOOLEAN NOT NULL DEFAULT FALSE,
   email_message VARCHAR(255) NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_notifications_agenda FOREIGN KEY (agenda_id) REFERENCES agendas(id) ON DELETE SET NULL,
   INDEX idx_notifications_audience_created (audience, created_at)
 );

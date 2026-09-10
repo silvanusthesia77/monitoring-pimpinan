@@ -41,6 +41,9 @@ func newApp() (*App, error) {
 	if err := migrateNotificationEmailMessage(db); err != nil {
 		return nil, err
 	}
+	if err := migrateNotificationAgendaID(db); err != nil {
+		return nil, err
+	}
 	if err := migrateDefaultLeaderEmail(db); err != nil {
 		return nil, err
 	}
@@ -132,6 +135,24 @@ func migrateNotificationEmailMessage(db *sql.DB) error {
 		return err
 	}
 	_, err = db.Exec("ALTER TABLE notifications ADD COLUMN email_message VARCHAR(255) NULL AFTER email_sent")
+	return err
+}
+
+func migrateNotificationAgendaID(db *sql.DB) error {
+	var columnName string
+	err := db.QueryRow(`
+		SELECT COLUMN_NAME
+		FROM INFORMATION_SCHEMA.COLUMNS
+		WHERE TABLE_SCHEMA = DATABASE()
+			AND TABLE_NAME = 'notifications'
+			AND COLUMN_NAME = 'agenda_id'`).Scan(&columnName)
+	if err == nil {
+		return nil
+	}
+	if err != sql.ErrNoRows {
+		return err
+	}
+	_, err = db.Exec("ALTER TABLE notifications ADD COLUMN agenda_id BIGINT NULL AFTER audience")
 	return err
 }
 
