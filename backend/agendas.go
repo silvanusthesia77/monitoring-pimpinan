@@ -154,7 +154,8 @@ func (app *App) createAgenda(w http.ResponseWriter, r *http.Request, user User) 
 	}
 
 	agendaID, _ := result.LastInsertId()
-	emailStatus := app.notifyRole(roleLeader, "Agenda baru menunggu validasi", title+" telah disubmit staf dan membutuhkan validasi pimpinan.", true)
+	notificationBody := title + " telah disubmit staf dan membutuhkan validasi pimpinan."
+	emailStatus := app.notifyRole(roleLeader, "Agenda baru menunggu validasi", notificationBody, true, newAgendaEmailBody(title, location, organizer, staffNote, startAt, endAt))
 
 	agenda, err := app.getAgenda(agendaID)
 	if err != nil {
@@ -425,6 +426,31 @@ func validationMessage(agenda Agenda) string {
 		return agenda.Title + " diputuskan diwakili oleh " + agenda.Delegate + "."
 	}
 	return agenda.Title + " diputuskan dihadiri langsung."
+}
+
+func newAgendaEmailBody(title, location, organizer, staffNote string, startAt, endAt time.Time) string {
+	return strings.Join([]string{
+		"Yth. Pimpinan Kabupaten Sorong Selatan,",
+		"",
+		"Dengan hormat,",
+		"",
+		"Melalui sistem Aplikasi Monitor Agenda Pimpinan Kabupaten Sorong Selatan, staf telah mengajukan agenda baru yang memerlukan validasi Bapak/Ibu Pimpinan.",
+		"",
+		"Detail agenda:",
+		"Nama kegiatan: " + title,
+		"Lokasi: " + location,
+		"Waktu mulai: " + formatIndonesianDateTime(startAt),
+		"Waktu selesai: " + formatIndonesianDateTime(endAt),
+		"Penyelenggara: " + organizer,
+		"Keterangan staf: " + staffNote,
+		"",
+		"Mohon Bapak/Ibu Pimpinan dapat masuk ke aplikasi untuk meninjau agenda tersebut dan memberikan keputusan kehadiran, apakah hadir langsung atau diwakili.",
+		"",
+		"Terima kasih.",
+		"",
+		"Hormat kami,",
+		"Sistem Aplikasi Monitor Agenda Pimpinan Kabupaten Sorong Selatan",
+	}, "\n")
 }
 
 func nullableTime(value sql.NullTime) *string {

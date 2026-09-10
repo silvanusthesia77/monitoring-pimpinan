@@ -74,3 +74,12 @@ func loadEnvFile(path string) {
 		}
 	}
 }
+
+func formatIndonesianDateTime(value time.Time) string {
+	months := []string{
+		"Januari", "Februari", "Maret", "April", "Mei", "Juni",
+		"Juli", "Agustus", "September", "Oktober", "November", "Desember",
+	}
+	month := months[int(value.Month())-1]
+	return value.Format("02 ") + month + value.Format(" 2006 pukul 15:04")
+}

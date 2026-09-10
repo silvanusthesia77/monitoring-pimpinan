@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -49,7 +50,7 @@ func (app *App) addNotification(audience, title, body string, emailSent bool, em
 	}
 }
 
-func (app *App) notifyRole(audience, title, body string, sendEmail bool) EmailDelivery {
+func (app *App) notifyRole(audience, title, body string, sendEmail bool, emailBody ...string) EmailDelivery {
 	delivery := EmailDelivery{
 		Attempted: sendEmail,
 		Message:   "Notifikasi web berhasil dibuat.",
@@ -57,13 +58,18 @@ func (app *App) notifyRole(audience, title, body string, sendEmail bool) EmailDe
 
 	if sendEmail {
 		recipients := app.emailsForRole(audience)
+		messageBody := body
+		if len(emailBody) > 0 && strings.TrimSpace(emailBody[0]) != "" {
+			messageBody = emailBody[0]
+		}
+
 		if len(recipients) == 0 {
 			delivery.Message = "Email gagal dikirim: tidak ada alamat penerima untuk role ini."
 		} else if !app.mailer.Enabled() {
 			delivery.Message = "Email belum terkirim: SMTP Gmail belum dikonfigurasi."
-			_, _ = app.mailer.Send(recipients, title, body)
+			_, _ = app.mailer.Send(recipients, title, messageBody)
 		} else {
-			emailSent, err := app.mailer.Send(recipients, title, body)
+			emailSent, err := app.mailer.Send(recipients, title, messageBody)
 			delivery.Sent = emailSent
 			if err != nil {
 				log.Printf("gagal mengirim email notifikasi: %v", err)
