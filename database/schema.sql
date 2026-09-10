@@ -55,6 +55,16 @@ CREATE TABLE IF NOT EXISTS agendas (
   INDEX idx_agendas_status (status)
 );
 
+CREATE TABLE IF NOT EXISTS agenda_documentation_files (
+  agenda_id BIGINT NOT NULL,
+  file_id BIGINT NOT NULL,
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (agenda_id, file_id),
+  CONSTRAINT fk_agenda_docs_agenda FOREIGN KEY (agenda_id) REFERENCES agendas(id) ON DELETE CASCADE,
+  CONSTRAINT fk_agenda_docs_file FOREIGN KEY (file_id) REFERENCES files(id)
+);
+
 CREATE TABLE IF NOT EXISTS notifications (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
   audience ENUM('staf', 'pimpinan', 'semua') NOT NULL,

@@ -46,8 +46,9 @@ function renderStats() {
 }
 
 function renderAgendaList() {
-  el("agendaList").innerHTML = state.agendas.length
-    ? state.agendas.slice(0, 8).map(agendaItem).join("")
+  const latestAgendas = [...state.agendas].sort((left, right) => new Date(right.created_at) - new Date(left.created_at));
+  el("agendaList").innerHTML = latestAgendas.length
+    ? latestAgendas.slice(0, 8).map(agendaItem).join("")
     : `<p class="empty-text">Belum ada agenda.</p>`;
   document.querySelectorAll(".agenda-item").forEach((button) => {
     button.addEventListener("click", () => {
@@ -242,10 +243,11 @@ function agendaDetails(agenda) {
 }
 
 function agendaDownloads(agenda) {
+  const documentFiles = documentationFiles(agenda);
   return [
     agenda.invitation ? downloadLink("Download undangan", agenda.invitation) : muted("Undangan belum diunggah"),
-    agenda.documentation ? downloadLink("Download dokumentasi", agenda.documentation) : muted("Dokumentasi belum tersedia"),
-    agenda.documentation ? reportPDFLink(agenda) : "",
+    documentFiles.length ? documentFiles.map((file, index) => downloadLink(`Download lampiran ${index + 1}`, file)).join("") : muted("Dokumentasi belum tersedia"),
+    documentFiles.length ? reportPDFLink(agenda) : "",
   ].join("");
 }
 
@@ -255,7 +257,7 @@ function leaderDeleteAction(agenda) {
 }
 
 function renderReports() {
-  const reports = state.agendas.filter((agenda) => agenda.documentation);
+  const reports = state.agendas.filter((agenda) => documentationFiles(agenda).length);
   el("reportsList").innerHTML = reports.length
     ? reports.map(reportCard).join("")
     : `<p class="empty-text">Belum ada laporan kegiatan. Laporan muncul setelah staf mengupload dokumentasi.</p>`;
@@ -263,6 +265,7 @@ function renderReports() {
 
 function reportCard(agenda) {
   const attendance = agenda.status === "diwakili" ? `Diwakili oleh ${agenda.delegate}` : "Pimpinan hadir sendiri";
+  const documentLinks = documentationFiles(agenda).map((file, index) => downloadLink(`Download lampiran ${index + 1}`, file)).join("");
   return `
     <article class="report-card">
       <div class="report-card-header">
@@ -279,7 +282,7 @@ function reportCard(agenda) {
       </dl>
       <div class="report-actions">
         ${reportPDFLink(agenda)}
-        ${downloadLink("Download dokumentasi", agenda.documentation)}
+        ${documentLinks}
       </div>
     </article>
   `;
@@ -308,6 +311,13 @@ function downloadLink(label, file) {
 
 function reportPDFLink(agenda) {
   return `<a class="download-link" href="/api/agendas/${agenda.id}/report-pdf">Download PDF Berita Acara</a>`;
+}
+
+function documentationFiles(agenda) {
+  if (Array.isArray(agenda.documentation_files) && agenda.documentation_files.length) {
+    return agenda.documentation_files;
+  }
+  return agenda.documentation ? [agenda.documentation] : [];
 }
 
 function muted(text) {

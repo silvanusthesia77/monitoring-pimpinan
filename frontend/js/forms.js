@@ -308,6 +308,9 @@ function documentationFormError(agenda, form) {
   if (!form.elements.documentation.files.length) {
     return "File dokumentasi wajib diunggah.";
   }
+  if (form.elements.documentation.files.length > 5) {
+    return "Maksimal upload 5 lampiran dokumentasi.";
+  }
   if (!String(form.elements.report_note.value || "").trim()) {
     return "Ringkasan laporan wajib diisi.";
   }

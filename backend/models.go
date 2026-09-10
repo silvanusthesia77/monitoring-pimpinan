@@ -48,30 +48,31 @@ type FileRecord struct {
 }
 
 type Agenda struct {
-	ID            int64       `json:"id"`
-	Title         string      `json:"title"`
-	Location      string      `json:"location"`
-	StartAt       string      `json:"start_at"`
-	EndAt         string      `json:"end_at"`
-	Organizer     string      `json:"organizer"`
-	StaffNote     string      `json:"staff_note"`
-	Status        string      `json:"status"`
-	Delegate      string      `json:"delegate"`
-	LeaderNote    string      `json:"leader_note"`
-	ValidatedAt   *string     `json:"validated_at"`
-	PulledBackAt  *string     `json:"pulled_back_at"`
-	ReportNote    string      `json:"report_note"`
-	CreatedAt     string      `json:"created_at"`
-	Phase         string      `json:"phase"`
-	DisplayStatus string      `json:"display_status"`
-	CanRevise     bool        `json:"can_revise"`
-	CanValidate   bool        `json:"can_validate"`
-	CanPullback   bool        `json:"can_pullback"`
-	CanUploadDoc  bool        `json:"can_upload_documentation"`
-	IsLocked      bool        `json:"is_locked"`
-	HoursUntil    int64       `json:"hours_until"`
-	Invitation    *FileRecord `json:"invitation"`
-	Documentation *FileRecord `json:"documentation"`
+	ID            int64        `json:"id"`
+	Title         string       `json:"title"`
+	Location      string       `json:"location"`
+	StartAt       string       `json:"start_at"`
+	EndAt         string       `json:"end_at"`
+	Organizer     string       `json:"organizer"`
+	StaffNote     string       `json:"staff_note"`
+	Status        string       `json:"status"`
+	Delegate      string       `json:"delegate"`
+	LeaderNote    string       `json:"leader_note"`
+	ValidatedAt   *string      `json:"validated_at"`
+	PulledBackAt  *string      `json:"pulled_back_at"`
+	ReportNote    string       `json:"report_note"`
+	CreatedAt     string       `json:"created_at"`
+	Phase         string       `json:"phase"`
+	DisplayStatus string       `json:"display_status"`
+	CanRevise     bool         `json:"can_revise"`
+	CanValidate   bool         `json:"can_validate"`
+	CanPullback   bool         `json:"can_pullback"`
+	CanUploadDoc  bool         `json:"can_upload_documentation"`
+	IsLocked      bool         `json:"is_locked"`
+	HoursUntil    int64        `json:"hours_until"`
+	Invitation    *FileRecord  `json:"invitation"`
+	Documentation *FileRecord  `json:"documentation"`
+	Documents     []FileRecord `json:"documentation_files"`
 }
 
 type Notification struct {

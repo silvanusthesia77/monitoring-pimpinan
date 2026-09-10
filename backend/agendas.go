@@ -107,6 +107,10 @@ func (app *App) listAgendas(w http.ResponseWriter) {
 			writeError(w, http.StatusInternalServerError, "Gagal membaca agenda")
 			return
 		}
+		if err := app.loadDocumentationFiles(&agenda); err != nil {
+			writeError(w, http.StatusInternalServerError, "Gagal membaca lampiran dokumentasi")
+			return
+		}
 		agendas = append(agendas, agenda)
 	}
 	writeJSON(w, http.StatusOK, agendas)
@@ -295,7 +299,7 @@ func (app *App) uploadDocumentation(w http.ResponseWriter, r *http.Request, id i
 		methodNotAllowed(w)
 		return
 	}
-	if err := r.ParseMultipartForm(32 << 20); err != nil {
+	if err := r.ParseMultipartForm(64 << 20); err != nil {
 		badRequest(w, "Form dokumentasi tidak valid")
 		return
 	}
@@ -310,10 +314,24 @@ func (app *App) uploadDocumentation(w http.ResponseWriter, r *http.Request, id i
 		return
 	}
 
-	fh, ok := firstUploadedFile(r, "documentation")
-	if !ok || fh.Size == 0 {
-		badRequest(w, "File dokumentasi wajib diunggah")
+	files := r.MultipartForm.File["documentation"]
+	if len(files) == 0 {
+		badRequest(w, "Minimal satu file dokumentasi wajib diunggah")
 		return
+	}
+	if len(files) > 5 {
+		badRequest(w, "Maksimal upload 5 lampiran dokumentasi")
+		return
+	}
+	for _, fh := range files {
+		if fh.Size == 0 {
+			badRequest(w, "File dokumentasi tidak boleh kosong")
+			return
+		}
+		if !isPDFImage(contentType(fh)) {
+			badRequest(w, "Lampiran dokumentasi harus berupa gambar JPG, PNG, atau GIF")
+			return
+		}
 	}
 	values, ok := requiredFormValues(w, r, "report_note")
 	if !ok {
@@ -321,17 +339,42 @@ func (app *App) uploadDocumentation(w http.ResponseWriter, r *http.Request, id i
 	}
 	reportNote := values[0]
 
-	fileID, err := app.saveUpload(fh, user.ID)
+	tx, err := app.db.Begin()
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "Gagal menyimpan dokumentasi")
+		writeError(w, http.StatusInternalServerError, "Gagal memulai penyimpanan laporan")
 		return
 	}
+	defer tx.Rollback()
 
-	_, err = app.db.Exec(
+	fileIDs := make([]int64, 0, len(files))
+	for _, fh := range files {
+		fileID, err := app.saveUpload(fh, user.ID)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "Gagal menyimpan dokumentasi")
+			return
+		}
+		fileIDs = append(fileIDs, fileID)
+	}
+
+	_, err = tx.Exec(
 		"UPDATE agendas SET documentation_file_id = ?, report_note = ? WHERE id = ?",
-		fileID, reportNote, id,
+		fileIDs[0], reportNote, id,
 	)
 	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Gagal menyimpan laporan")
+		return
+	}
+	for index, fileID := range fileIDs {
+		_, err = tx.Exec(
+			"INSERT INTO agenda_documentation_files (agenda_id, file_id, sort_order) VALUES (?, ?, ?)",
+			id, fileID, index+1,
+		)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "Gagal menyimpan lampiran laporan")
+			return
+		}
+	}
+	if err := tx.Commit(); err != nil {
 		writeError(w, http.StatusInternalServerError, "Gagal menyimpan laporan")
 		return
 	}
@@ -347,7 +390,74 @@ func (app *App) uploadDocumentation(w http.ResponseWriter, r *http.Request, id i
 
 func (app *App) getAgenda(id int64) (Agenda, error) {
 	row := app.db.QueryRow(agendaSelect+" WHERE a.id = ?", id)
-	return scanAgenda(row)
+	agenda, err := scanAgenda(row)
+	if err != nil {
+		return Agenda{}, err
+	}
+	if err := app.loadDocumentationFiles(&agenda); err != nil {
+		return Agenda{}, err
+	}
+	return agenda, nil
+}
+
+func (app *App) loadDocumentationFiles(agenda *Agenda) error {
+	rows, err := app.db.Query(`
+		SELECT f.id, f.original_name, f.mime_type, f.size_bytes, f.created_at
+		FROM agenda_documentation_files adf
+		JOIN files f ON f.id = adf.file_id
+		WHERE adf.agenda_id = ?
+		ORDER BY adf.sort_order, f.created_at`, agenda.ID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	documents := make([]FileRecord, 0)
+	for rows.Next() {
+		var doc FileRecord
+		var created time.Time
+		if err := rows.Scan(&doc.ID, &doc.OriginalName, &doc.MimeType, &doc.SizeBytes, &created); err != nil {
+			return err
+		}
+		doc.CreatedAt = created.Format(time.RFC3339)
+		documents = append(documents, doc)
+	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
+	if len(documents) == 0 && agenda.Documentation != nil {
+		documents = append(documents, *agenda.Documentation)
+	}
+	agenda.Documents = documents
+	if len(agenda.Documents) > 0 && agenda.Documentation == nil {
+		agenda.Documentation = &agenda.Documents[0]
+	}
+	return nil
+}
+
+func (app *App) getStoredDocumentationFiles(agendaID int64) ([]storedReportFile, error) {
+	rows, err := app.db.Query(`
+		SELECT f.id, f.original_name, f.stored_name, f.mime_type, f.size_bytes, f.created_at
+		FROM agenda_documentation_files adf
+		JOIN files f ON f.id = adf.file_id
+		WHERE adf.agenda_id = ?
+		ORDER BY adf.sort_order, f.created_at`, agendaID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	files := make([]storedReportFile, 0)
+	for rows.Next() {
+		var file storedReportFile
+		var created time.Time
+		if err := rows.Scan(&file.ID, &file.OriginalName, &file.StoredName, &file.MimeType, &file.SizeBytes, &created); err != nil {
+			return nil, err
+		}
+		file.CreatedAt = created.Format(time.RFC3339)
+		files = append(files, file)
+	}
+	return files, rows.Err()
 }
 
 func scanAgenda(scanner agendaScanner) (Agenda, error) {

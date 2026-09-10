@@ -88,7 +88,7 @@
             <div id="agendaSidebarCard" class="sidebar-card">
               <div class="mb-3">
                 <p class="section-kicker">Agenda</p>
-                <h2 class="mt-1 text-lg font-black">Daftar Terdekat</h2>
+                <h2 class="mt-1 text-lg font-black">Daftar Terbaru</h2>
               </div>
               <div id="agendaList" class="grid gap-2"></div>
             </div>
@@ -211,7 +211,7 @@
               <div id="documentationAgendaBox" class="report-agenda-box"></div>
               <p id="documentationHint" class="action-hint"></p>
               <form id="reportForm" class="mt-4 grid gap-3">
-                <label class="form-label">File dokumentasi<input name="documentation" class="field file-field" type="file" required /></label>
+                <label class="form-label">File dokumentasi<input name="documentation" class="field file-field" type="file" accept="image/jpeg,image/png,image/gif" multiple required /></label>
                 <label class="form-label">Ringkasan laporan<textarea name="report_note" class="field min-h-24" required></textarea></label>
                 <button id="reportSubmit" class="button-primary" type="submit">Simpan Laporan</button>
               </form>

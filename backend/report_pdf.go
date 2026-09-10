@@ -32,13 +32,21 @@ func (app *App) downloadReportPDF(w http.ResponseWriter, r *http.Request, id int
 		return
 	}
 
-	documentation, err := app.getStoredReportFile(agenda.Documentation.ID)
+	documentationFiles, err := app.getStoredDocumentationFiles(agenda.ID)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "Gagal membaca dokumentasi laporan")
 		return
 	}
+	if len(documentationFiles) == 0 {
+		documentation, err := app.getStoredReportFile(agenda.Documentation.ID)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "Gagal membaca dokumentasi laporan")
+			return
+		}
+		documentationFiles = append(documentationFiles, documentation)
+	}
 
-	pdf, err := buildReportPDF(app.uploadDir, agenda, documentation)
+	pdf, err := buildReportPDF(app.uploadDir, agenda, documentationFiles)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "Gagal membuat PDF berita acara")
 		return
@@ -71,7 +79,7 @@ func (app *App) getStoredReportFile(id int64) (storedReportFile, error) {
 	return file, nil
 }
 
-func buildReportPDF(uploadDir string, agenda Agenda, documentation storedReportFile) (*gofpdf.Fpdf, error) {
+func buildReportPDF(uploadDir string, agenda Agenda, documentationFiles []storedReportFile) (*gofpdf.Fpdf, error) {
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.SetMargins(18, 16, 18)
 	pdf.SetAutoPageBreak(true, 18)
@@ -104,15 +112,15 @@ func buildReportPDF(uploadDir string, agenda Agenda, documentation storedReportF
 	pdf.Ln(3)
 	addPDFSection(pdf, tr, "Laporan Kegiatan")
 	addPDFRow(pdf, tr, "Ringkasan Laporan", agenda.ReportNote)
-	addPDFRow(pdf, tr, "File Dokumentasi", documentation.OriginalName)
-	addPDFRow(pdf, tr, "Tanggal Upload", formatReportTime(documentation.CreatedAt))
+	addPDFRow(pdf, tr, "Jumlah Lampiran", fmt.Sprintf("%d file dokumentasi", len(documentationFiles)))
+	if len(documentationFiles) > 0 {
+		addPDFRow(pdf, tr, "Tanggal Upload", formatReportTime(documentationFiles[0].CreatedAt))
+	}
 
-	if isPDFImage(documentation.MimeType) {
-		if err := addDocumentationImage(pdf, filepath.Join(uploadDir, documentation.StoredName)); err != nil {
-			addPDFRow(pdf, tr, "Lampiran", "Gambar dokumentasi gagal dimuat ke PDF.")
+	for index, documentation := range documentationFiles {
+		if err := addDocumentationImage(pdf, tr, filepath.Join(uploadDir, documentation.StoredName), index+1, documentation.OriginalName); err != nil {
+			addPDFRow(pdf, tr, fmt.Sprintf("Lampiran %d", index+1), "Gambar dokumentasi gagal dimuat ke PDF.")
 		}
-	} else {
-		addPDFRow(pdf, tr, "Lampiran", "File dokumentasi bukan gambar. Silakan download dokumentasi asli dari sistem.")
 	}
 
 	pdf.Ln(6)
@@ -135,10 +143,12 @@ func addPDFRow(pdf *gofpdf.Fpdf, tr func(string) string, label, value string) {
 	pdf.MultiCell(0, 7, tr(fallbackText(value, "-")), "1", "L", false)
 }
 
-func addDocumentationImage(pdf *gofpdf.Fpdf, imagePath string) error {
+func addDocumentationImage(pdf *gofpdf.Fpdf, tr func(string) string, imagePath string, index int, filename string) error {
 	pdf.Ln(4)
 	pdf.SetFont("Arial", "B", 10)
-	pdf.CellFormat(0, 7, "Lampiran Dokumentasi", "", 1, "L", false, 0, "")
+	pdf.CellFormat(0, 7, tr(fmt.Sprintf("Lampiran %d", index)), "", 1, "L", false, 0, "")
+	pdf.SetFont("Arial", "", 8)
+	pdf.CellFormat(0, 5, tr(filename), "", 1, "L", false, 0, "")
 
 	options := gofpdf.ImageOptions{ReadDpi: true}
 	info := pdf.RegisterImageOptions(imagePath, options)

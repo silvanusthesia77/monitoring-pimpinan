@@ -16,9 +16,10 @@ HTML, CSS, serta Tailwind CSS.
 - Pimpinan dapat menarik kembali validasi selama kegiatan masih lebih dari 24 jam
 - Validasi terkunci jika kegiatan kurang dari 24 jam atau sudah berjalan
 - Status agenda otomatis: menunggu validasi, tervalidasi, terkunci, sedang berlangsung, menunggu dokumentasi, selesai
-- Staf upload dokumentasi kegiatan dari menu Dokumentasi dengan memilih agenda
+- Staf upload 1 sampai 5 gambar dokumentasi kegiatan dari menu Dokumentasi dengan memilih agenda
 - Laporan/berita acara tampil di menu Laporan dan dapat dilihat oleh staf serta pimpinan
-- Pimpinan dan staf dapat download undangan, dokumentasi, serta PDF berita acara
+- Pimpinan dan staf dapat download undangan, seluruh lampiran dokumentasi, serta PDF berita acara
+- PDF berita acara menampilkan gambar dokumentasi sebagai subbab Lampiran 1, Lampiran 2, dan seterusnya
 
 ## Akun Demo
 

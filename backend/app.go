@@ -44,6 +44,9 @@ func newApp() (*App, error) {
 	if err := migrateNotificationAgendaID(db); err != nil {
 		return nil, err
 	}
+	if err := migrateAgendaDocumentationFiles(db); err != nil {
+		return nil, err
+	}
 	if err := migrateDefaultLeaderEmail(db); err != nil {
 		return nil, err
 	}
@@ -153,6 +156,28 @@ func migrateNotificationAgendaID(db *sql.DB) error {
 		return err
 	}
 	_, err = db.Exec("ALTER TABLE notifications ADD COLUMN agenda_id BIGINT NULL AFTER audience")
+	return err
+}
+
+func migrateAgendaDocumentationFiles(db *sql.DB) error {
+	_, err := db.Exec(`
+		CREATE TABLE IF NOT EXISTS agenda_documentation_files (
+			agenda_id BIGINT NOT NULL,
+			file_id BIGINT NOT NULL,
+			sort_order INT NOT NULL DEFAULT 0,
+			created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (agenda_id, file_id),
+			CONSTRAINT fk_agenda_docs_agenda FOREIGN KEY (agenda_id) REFERENCES agendas(id) ON DELETE CASCADE,
+			CONSTRAINT fk_agenda_docs_file FOREIGN KEY (file_id) REFERENCES files(id)
+		)`)
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec(`
+		INSERT IGNORE INTO agenda_documentation_files (agenda_id, file_id, sort_order)
+		SELECT id, documentation_file_id, 1
+		FROM agendas
+		WHERE documentation_file_id IS NOT NULL`)
 	return err
 }
 
